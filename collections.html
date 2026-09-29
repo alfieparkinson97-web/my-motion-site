@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Country Collections — Kits4U</title>
+<meta name="description" content="Shop football jerseys by nation: Brazil, England, Argentina, Italy, Japan, Nigeria, France and Germany. Home, away, third and retro kits.">
+<meta name="theme-color" content="#05070a">
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Poppins:wght@500;600;700&family=Prata&display=swap">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/shop.css">
+</head>
+<body class="inner" data-page="collections">
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-head">
+  <header class="navbar">
+    <div class="navrow">
+      <a class="logo" href="index.html"><img class="logo-mark" src="assets/img/favicon.svg" alt=""><span>kits<i>4u</i></span></a>
+      <nav class="links" id="site-nav" aria-label="Primary">
+          <a href="index.html">Explore</a>
+          <a href="collections.html" aria-current="page">Nations</a>
+          <a href="collections.html?type=retro">Retro</a>
+          <a href="index.html#delivery">Delivery</a>
+          <a class="enroll" href="cart.html" data-cart-link data-cart-label>Kit Bag<span class="cart-count" data-cart-count hidden>0</span></a>
+      </nav>
+      <div class="nav-tools">
+        <a class="cart-mini" href="cart.html" data-cart-link data-cart-label aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span class="cart-count" data-cart-count hidden>0</span>
+        </a>
+        <button class="burger" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+</div>
+
+<main id="main">
+  <section class="coll-hero" id="coll-hero">
+    <div class="container coll-hero__inner">
+      <div class="coll-hero__orb"><canvas id="coll-orb" aria-hidden="true"></canvas></div>
+      <div>
+        <p class="kicker" id="coll-kicker">Country collections</p>
+        <h1 class="h-display" id="coll-title">All Nations</h1>
+        <p class="lead" id="coll-blurb">The world&rsquo;s finest kits from eight football-obsessed nations. Pick a flag, pick a shirt, wear your passion.</p>
+        <p class="coll-count" id="coll-count" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="filters">
+    <div class="container">
+      <div class="chips" id="chips" role="group" aria-label="Filter by nation"></div>
+      <div class="filter-row">
+        <div class="seg" id="types" role="group" aria-label="Kit type"></div>
+        <label class="search"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="visually-hidden">Search kits</span><input type="search" id="q" placeholder="Search kits, eras, colours" autocomplete="off"></label>
+        <label><span class="visually-hidden">Sort by</span>
+          <select id="sort">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="retro">Heritage first</option>
+            <option value="name">A&ndash;Z</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <section class="container" aria-label="Kits">
+    <div class="kit-grid" id="grid"></div>
+    <div class="empty-state" id="empty" hidden>
+      <p class="empty-state__title">No kits match that search</p>
+      <p>Try another nation or clear your filters.</p>
+      <button class="btn btn--light" type="button" id="reset">Clear filters</button>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="logo" href="index.html"><img class="logo-mark" src="assets/img/favicon.svg" alt=""><span>kits<i>4u</i></span></a>
+        <p>The world&rsquo;s finest kits from the world&rsquo;s great football nations. Wear your passion.</p>
+      </div>
+      <nav class="foot-col" aria-label="Shop">
+        <h3>Shop</h3>
+        <ul>
+          <li><a href="collections.html">All nations</a></li>
+          <li><a href="collections.html?type=home">Home kits</a></li>
+          <li><a href="collections.html?type=away">Away kits</a></li>
+          <li><a href="collections.html?type=retro">Retro reissues</a></li>
+        </ul>
+      </nav>
+      <nav class="foot-col" aria-label="Help">
+        <h3>Help</h3>
+        <ul>
+          <li><a href="index.html#delivery">Delivery</a></li>
+          <li><a href="index.html#delivery">Returns</a></li>
+          <li><a href="product.html?kit=bra-home#size-guide">Size guide</a></li>
+          <li><a href="cart.html">Your kit bag</a></li>
+        </ul>
+      </nav>
+      <nav class="foot-col" aria-label="Nations">
+        <h3>Nations</h3>
+        <ul>
+          <li><a href="collections.html?country=bra">Brazil</a></li>
+          <li><a href="collections.html?country=arg">Argentina</a></li>
+          <li><a href="collections.html?country=nga">Nigeria</a></li>
+          <li><a href="collections.html?country=jpn">Japan</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="foot-base">
+      <p>&copy; <span data-year></span> Kits4U. Global football fashion, delivered.</p>
+      <div class="foot-flags" data-flags></div>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/flags.js"></script>
+<script src="assets/js/jersey.js"></script>
+<script src="assets/js/gl.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/collections.js"></script>
+</body>
+</html>
