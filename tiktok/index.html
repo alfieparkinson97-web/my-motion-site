@@ -74,13 +74,13 @@ canvas.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920p
 .hud b { display: block; font-size: 68px; letter-spacing: .06em; margin-top: 4px }
 
 /* odometer */
-#odo { top: 740px; height: 300px; display: flex; justify-content: center; font-weight: 800; font-size: 285px; line-height: 300px; letter-spacing: -.04em }
-#odo .col { position: relative; height: 340px; margin: -20px -60px; width: calc(.6em + 120px);
+#odo { top: 700px; height: 300px; display: flex; justify-content: center; font-weight: 800; font-size: 440px; line-height: 300px; letter-spacing: -.04em }
+#odo .col { position: relative; height: 380px; margin: -40px -60px; width: calc(.6em + 120px);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%) }
 #odo .col.dot { width: calc(.3em + 120px) }
 #odo .chrome { padding: 0 }
-#odo .strip { position: absolute; left: 60px; right: 60px; top: -40px; text-align: center }
+#odo .strip { position: absolute; left: 60px; right: 60px; top: -20px; text-align: center }
 #odo .strip div { height: 420px; line-height: 420px }
 
 /* end card */
@@ -124,9 +124,10 @@ canvas.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920p
   <div id="w3" class="abs c sans" style="top:690px;font-size:170px">Shop.</div>
 
   <!-- 6 · launch -->
-  <div id="launching" class="abs c" style="top:600px;font-weight:800;font-size:76px;letter-spacing:.42em;text-indent:.42em;text-shadow:0 0 30px rgba(76,155,255,.9)">LAUNCHING</div>
+  <div id="launching" class="abs c" style="top:550px;font-weight:800;font-size:76px;letter-spacing:.42em;text-indent:.42em;text-shadow:0 0 30px rgba(76,155,255,.9)">LAUNCHING</div>
   <div id="odo" class="abs c"></div>
-  <div id="sub6" class="abs c" style="top:1090px;font-weight:800;font-size:54px;letter-spacing:.3em;text-indent:.3em;color:#cfeaff;text-shadow:0 0 22px rgba(76,155,255,.9)">MONDAY <span class="serif" style="font-size:1.35em;letter-spacing:0;text-transform:none;font-weight:400">20 October</span></div>
+  <div id="sub6" class="abs c serif" style="top:1035px;font-size:200px"><span class="chrome">October</span></div>
+  <div id="mon6" class="abs c" style="top:1262px;font-weight:800;font-size:54px;letter-spacing:.42em;text-indent:.42em;color:#cfeaff;text-shadow:0 0 22px rgba(76,155,255,.9)">MONDAY</div>
 
   <!-- 7 · end card -->
   <div id="logo" class="abs c" style="top:520px"><span class="k">kits</span><span class="u chrome">4u</span></div>

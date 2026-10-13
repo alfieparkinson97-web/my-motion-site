@@ -410,11 +410,11 @@ FLAGS.forEach(f => {
   f.el = el;
 });
 
-// odometer: each column rolls through random digits and lands on 20.10
+// odometer: each column rolls through random digits and lands on "20" (October)
 const ODO = [];
 {
   const r = rng(2010);
-  '20.10'.split('').forEach((ch, i) => {
+  '20'.split('').forEach((ch, i) => {
     const col = document.createElement('div');
     col.className = 'col' + (ch === '.' ? ' dot' : '');
     const strip = document.createElement('div');
@@ -428,7 +428,7 @@ const ODO = [];
     }
     col.appendChild(strip);
     $('odo').appendChild(col);
-    ODO.push({ strip, n, land: [15.55, 15.72, 0, 15.86, 16.0][i] });
+    ODO.push({ strip, n, land: [15.75, 16.0][i] });
   });
 }
 
@@ -493,8 +493,8 @@ function globeState(t) {
     s.D = lerp(1.7, 12, k);
     s.lat = lerp(35, 18, k);
     s.lon = 40 - 14 * (t - 14);
-    s.cy = lerp(960, 1470, k);
-    if (t >= 18) s.cy = 1470 + 40 * eInOutCubic(prog(t, 18, 22));
+    s.cy = lerp(960, t < 18 ? 1700 : 1470, k);
+    if (t >= 18) s.cy = lerp(1700, 1510, eOutExpo(prog(t, 18, 18.8)));
     s.sun = new THREE.Vector3(-0.85, 0.3, 0.35).normalize();
     s.moon = { ang: 1.4 + t * 0.55, r: 1.55, size: 0.2 };
     s.a = clamp((t - 14) / 0.12);
@@ -762,9 +762,10 @@ function render(t) {
     el.style.filter = `drop-shadow(0 0 ${24 + 50 * pulse}px rgba(76,155,255,${0.6 + 0.35 * pulse})) drop-shadow(0 6px 3px rgba(0,10,40,.6))`;
     if (t >= 16) el.style.transform = `scale(${1 + 0.12 * (1 - lock) + 0.03 * pulse})`;
   }
-  show($('sub6'), t, 16.3, 17.92, { from: 1.4, dy: 20 });
+  show($('sub6'), t, 16.22, 17.92, { from: 1.5, dy: 20 });
+  show($('mon6'), t, 16.5, 17.92, { from: 1.3, dy: 16 });
   if (t >= 15.95 && t < 18) {
-    const cx = 540, cy = 910;
+    const cx = 540, cy = 860;
     // flash, shock ring, stars bursting outward
     fx.fillStyle = `rgba(220,240,255,${0.55 * (1 - prog(t, 16, 16.3))})`;
     if (t >= 16) fx.fillRect(0, 0, W, H);

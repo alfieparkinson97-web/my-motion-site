@@ -395,7 +395,7 @@ def sfx():
     for tp in PICKUPS:
         place(fx, coin(), tp, 0.4)
     place(fx, riser(2.0), 14.0, 0.3)                          # launch
-    n, t0, t1, last = 38, 14.95, 16.0, 0
+    n, t0, t1, last = 26, 14.95, 16.0, 0
     for s in range(int((t1 - t0) * SR / 64)):
         t = t0 + s * 64 / SR
         idx = int((1 - (1 - (t - t0) / (t1 - t0)) ** 3) * (n - 1))
