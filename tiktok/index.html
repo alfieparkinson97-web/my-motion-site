@@ -46,7 +46,7 @@ canvas.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920p
   background: radial-gradient(120% 70% at 50% 30%, #1a2c4d 0%, #0b1424 45%, #05080f 100%) }
 .card .in::before { content: ""; position: absolute; inset: 0;
   background: radial-gradient(50% 30% at 50% 88%, rgba(76,155,255,.35), transparent 70%) }
-.card svg.jersey { position: absolute; left: 50px; top: 70px; width: 450px; height: auto; filter: drop-shadow(0 26px 30px rgba(0,0,0,.55)) }
+.card svg.jersey { position: absolute; left: 40px; top: 46px; width: 470px; height: auto; transform-origin: 50% 4%; filter: drop-shadow(0 26px 30px rgba(0,0,0,.55)) }
 .card .meta { position: absolute; left: 0; right: 0; bottom: 46px; text-align: center }
 .card .nation { font-weight: 800; font-size: 54px; letter-spacing: -.02em }
 .card .type { display: inline-block; margin-top: 12px; padding: 9px 22px 10px; border-radius: 99px; font-weight: 800; font-size: 24px; letter-spacing: .24em;
@@ -68,6 +68,9 @@ canvas.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920p
 
 /* game HUD */
 .hud { font-weight: 800; font-size: 36px; letter-spacing: .2em; color: #EAF8FF; text-shadow: 0 0 14px rgba(76,155,255,.9) }
+.hud .shield { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 22px; color: #9ED8FF }
+.hud .bar { width: 220px; height: 14px; border-radius: 99px; border: 2px solid rgba(158,216,255,.7); padding: 2px; box-shadow: 0 0 14px rgba(76,155,255,.6) }
+.hud .bar i { display: block; height: 100%; max-width: 100%; border-radius: 99px; background: linear-gradient(90deg, #2E6BFF, #9ED8FF, #EAF8FF); box-shadow: 0 0 10px #4C9BFF }
 .hud b { display: block; font-size: 68px; letter-spacing: .06em; margin-top: 4px }
 
 /* odometer */
@@ -112,7 +115,7 @@ canvas.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920p
   <div id="f3chip" class="abs c" style="top:1300px"><span class="pill">✦ Discount unlocked</span></div>
 
   <!-- 5 · game -->
-  <div id="hud" class="abs" style="left:70px;top:178px"><div class="hud">ASTEROID RUSH<b id="score">000000</b></div></div>
+  <div id="hud" class="abs" style="left:70px;top:178px"><div class="hud">ASTEROID RUSH<b id="score">000000</b><div class="shield"><span>◆</span><div class="bar"><i id="shield"></i></div></div></div></div>
   <div id="w1" class="abs c sans" style="top:300px;font-size:170px">Play.</div>
   <div id="w2" class="abs c serif" style="top:470px;font-size:230px"><span class="chrome">Win.</span></div>
   <div id="w3" class="abs c sans" style="top:690px;font-size:170px">Shop.</div>

@@ -1,8 +1,8 @@
 // kits4u launch TikTok — every frame is a pure function of time t (seconds).
 // render.mjs calls window.renderFrame(t) for each frame and screenshots the page.
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { createGame, SHOTS, PICKUPS } from './game.js';
+import { detailedShirtSVG } from './shirt.js';
 
 const K = window.K4U;
 const W = 1080, H = 1920;
@@ -362,136 +362,8 @@ function project(v, cam) {
   return { x: (p.x + 1) / 2 * W, y: (1 - p.y) / 2 * H, z: p.z };
 }
 
-/* ---------- Asteroid Rush ---------- */
-const gameScene = new THREE.Scene();
-const gameCam = new THREE.PerspectiveCamera(52, W / H, 0.1, 400);
-const pmrem = new THREE.PMREMGenerator(renderer);
-gameScene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-gameScene.add(new THREE.AmbientLight(0x6080c0, 0.5));
-const key = new THREE.DirectionalLight(0xdcecff, 2.6); key.position.set(-4, 6, 3); gameScene.add(key);
-const rim = new THREE.DirectionalLight(0x4c9bff, 3.2); rim.position.set(6, 1, -8); gameScene.add(rim);
-
-const ship = new THREE.Group();
-{
-  const chrome = new THREE.MeshStandardMaterial({ color: 0xd9ecff, metalness: 0.85, roughness: 0.22, envMapIntensity: 1.4 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x1a2438, metalness: 0.7, roughness: 0.35 });
-  const blue = new THREE.MeshStandardMaterial({ color: 0x2e6bff, emissive: 0x4c9bff, emissiveIntensity: 1.6, metalness: 0.3, roughness: 0.3 });
-  const glass = new THREE.MeshStandardMaterial({ color: 0x0a1a3a, emissive: 0x2e6bff, emissiveIntensity: 0.5, metalness: 0.2, roughness: 0.05 });
-  const body = new THREE.Mesh(new THREE.LatheGeometry([[0, -1.6], [0.22, -1.25], [0.36, -0.6], [0.42, 0.2], [0.4, 0.9], [0.3, 1.15], [0, 1.15]].map(p => new THREE.Vector2(p[0], p[1])), 24), chrome);
-  body.rotation.x = Math.PI / 2; body.scale.set(1, 1, 0.7); ship.add(body);
-  const canopy = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), glass);
-  canopy.scale.set(0.2, 0.16, 0.55); canopy.position.set(0, 0.24, -0.45); ship.add(canopy);
-  const wingShape = new THREE.Shape();
-  wingShape.moveTo(0, 0.6); wingShape.lineTo(1.9, 0.95); wingShape.lineTo(2.05, 1.15); wingShape.lineTo(0, 1.3); wingShape.lineTo(0, 0.6);
-  const wingGeo = new THREE.ExtrudeGeometry(wingShape, { depth: 0.06, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 1 });
-  for (const sx of [1, -1]) {
-    const w = new THREE.Mesh(wingGeo, chrome);
-    w.rotation.x = -Math.PI / 2; w.scale.set(sx, 1, 1); w.position.set(0, -0.03, -0.35); ship.add(w);
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.03, 0.06), blue);
-    stripe.position.set(sx * 1.05, 0.05, 0.62); stripe.rotation.y = sx * -0.17; ship.add(stripe);
-    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.55), dark);
-    fin.position.set(sx * 1.95, 0.2, 0.75); ship.add(fin);
-    const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.9, 16), dark);
-    pod.rotation.x = Math.PI / 2; pod.position.set(sx * 0.48, -0.05, 0.85); ship.add(pod);
-    const nozzle = new THREE.Mesh(new THREE.CircleGeometry(0.15, 20), blue);
-    nozzle.position.set(sx * 0.48, -0.05, 1.31); ship.add(nozzle);
-  }
-  ship.userData.flames = [];
-  const gc = document.createElement('canvas'); gc.width = gc.height = 128;
-  const gx = gc.getContext('2d'), gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gg.addColorStop(0, 'rgba(255,255,255,1)'); gg.addColorStop(0.2, 'rgba(158,216,255,.9)'); gg.addColorStop(0.5, 'rgba(46,107,255,.35)'); gg.addColorStop(1, 'rgba(46,107,255,0)');
-  gx.fillStyle = gg; gx.fillRect(0, 0, 128, 128);
-  const glowTex = new THREE.CanvasTexture(gc);
-  for (const sx of [1, -1]) {
-    const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
-    f.position.set(sx * 0.48, -0.05, 1.45); f.scale.set(1.1, 1.1, 1); ship.add(f);
-    ship.userData.flames.push(f);
-  }
-}
-gameScene.add(ship);
-
-function rockGeo(seed) {
-  const g = mergeVertices(new THREE.IcosahedronGeometry(1, 4));
-  const r = rng(seed);
-  const dirs = Array.from({ length: 7 }, () => new THREE.Vector3(r() - 0.5, r() - 0.5, r() - 0.5).normalize().multiplyScalar(1.5 + r() * 3));
-  const amps = dirs.map(() => 0.05 + r() * 0.09);
-  const pos = g.attributes.position, v = new THREE.Vector3();
-  for (let i = 0; i < pos.count; i++) {
-    v.fromBufferAttribute(pos, i).normalize();
-    let d = 1;
-    dirs.forEach((dd, j) => (d += Math.sin(v.dot(dd) * 3 + j) * amps[j]));
-    v.multiplyScalar(d);
-    v.x *= 1 + (r() - 0.5) * 0.0; // keep duplicates welded
-    pos.setXYZ(i, v.x, v.y * 0.85, v.z);
-  }
-  g.computeVertexNormals();
-  return g;
-}
-const rockMat = new THREE.MeshStandardMaterial({ color: 0x4d4741, roughness: 1, metalness: 0.05, envMapIntensity: 0.35 });
-const rockGeos = [1, 2, 3, 4, 5].map(rockGeo);
-const GR = rng(42);
-const ROCKS = [];
-for (let i = 0; i < 70; i++) {
-  let x = (GR() * 2 - 1) * 16, y = (GR() * 2 - 1) * 9 + 1.5;
-  if (Math.abs(x) < 3 && Math.abs(y) < 2.2) x += Math.sign(x || 1) * 3.5;
-  const m = new THREE.Mesh(rockGeos[i % 5], rockMat);
-  let s = 0.5 + Math.pow(GR(), 2) * 2.6;
-  if (Math.abs(x) < 8 && Math.abs(y) < 5) s = Math.min(s, 1.3);
-  s = Math.min(s, 1.9); y = Math.max(y, -3.5);
-  m.scale.setScalar(s);
-  ROCKS.push({ m, x, y, z0: -GR() * 130, s, rx: GR() * 2, ry: GR() * 2, target: false });
-  gameScene.add(m);
-}
-// rocks that get blasted: [fire time, hit time]
-const SHOTS = [[11.55, 11.8], [12.05, 12.3], [12.55, 12.8], [13.05, 13.3], [13.55, 13.8]];
-const ROCK_SPEED = 46, BOLT_SPEED = 160;
-const shipX = t => 1.35 * Math.sin((t - 11) * 2.4);
-const shipY = t => 0.35 * Math.sin((t - 11) * 1.7 + 1);
-SHOTS.forEach(([tf, th], i) => {
-  const m = new THREE.Mesh(rockGeos[i % 5], rockMat);
-  m.scale.setScalar(1.1);
-  const zHit = -BOLT_SPEED * (th - tf) - 2;
-  ROCKS.push({ m, x: shipX(tf), y: shipY(tf) + 0.1, z0: zHit - ROCK_SPEED * (th - 11), s: 1.1, rx: i, ry: i * 2, target: th });
-  gameScene.add(m);
-});
-const boltMat = new THREE.MeshBasicMaterial({ color: 0xbfe6ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-const BOLTS = SHOTS.map(() => {
-  const g = new THREE.Group();
-  for (const sx of [-1, 1]) {
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 8), boltMat);
-    b.rotation.x = Math.PI / 2; b.position.x = sx * 0.95; g.add(b);
-  }
-  gameScene.add(g);
-  return g;
-});
-
-function updateGame(t) {
-  const gt = t - 11;
-  const sx = shipX(t), sy = shipY(t);
-  const vx = 1.35 * 2.4 * Math.cos(gt * 2.4);
-  ship.position.set(sx, sy, 0);
-  ship.rotation.set(0.06, -vx * 0.05, -vx * 0.22);
-  ship.userData.flames.forEach((f, i) => { const k = 1 + 0.18 * Math.sin(t * 60 + i * 2); f.scale.set(1.1 * k, 1.1 * k, 1); });
-  gameCam.position.set(sx * 0.5, sy * 0.5 + 2.4, 10.5);
-  gameCam.lookAt(sx * 0.65, sy * 0.5 + 1.2, -8);
-  gameCam.rotation.z += -vx * 0.02;
-  gameCam.setViewOffset(W, H, 0, -330, W, H);
-  const hits = [];
-  for (const r of ROCKS) {
-    let z = r.z0 + ROCK_SPEED * gt;
-    if (!r.target) z = ((z + 125) % 135 + 135) % 135 - 125;
-    r.m.position.set(r.x, r.y, z);
-    r.m.rotation.set(r.rx + t * 0.6, r.ry + t * 0.4, 0);
-    r.m.visible = !(r.target && t >= r.target) && z < -3;
-    if (r.target && t >= r.target && t < r.target + 0.9) hits.push({ pos: new THREE.Vector3(r.x, r.y, z), t0: r.target });
-  }
-  BOLTS.forEach((b, i) => {
-    const [tf, th] = SHOTS[i];
-    b.visible = t >= tf && t < th;
-    b.position.set(shipX(tf), shipY(tf), -0.8 - BOLT_SPEED * (t - tf));
-  });
-  return hits;
-}
+/* ---------- Asteroid Rush (game.js) ---------- */
+const game = createGame(renderer, rng);
 
 /* ======================================================================
    DOM: shirt cards, flags, text
@@ -502,10 +374,10 @@ const CARDS = KITS.map(kit => {
   const el = document.createElement('div');
   el.className = 'card';
   const label = K.types[kit.type].label + (kit.type === 'retro' ? ' ' + kit.season : '');
-  el.innerHTML = '<div class="in">' + K.jerseySVG(kit) + '<div class="meta"><div class="nation">' + K.countries[kit.country].name +
+  el.innerHTML = '<div class="in">' + detailedShirtSVG(kit) + '<div class="meta"><div class="nation">' + K.countries[kit.country].name +
     '</div><div class="type">' + label.toUpperCase() + '</div></div><div class="gloss"></div></div>';
   cardsEl.appendChild(el);
-  return { el, meta: el.querySelector('.meta'), gloss: el.querySelector('.gloss') };
+  return { el, meta: el.querySelector('.meta'), gloss: el.querySelector('.gloss'), svg: el.querySelector('svg') };
 });
 
 // extra flags not in the storefront set
@@ -655,6 +527,55 @@ function setGlobe(s) {
 /* ======================================================================
    frame
    ====================================================================== */
+/* game overlay: reticle, sparks, score pop-ups */
+function popText(txt, x, y, k, size = 64) {
+  if (k <= 0 || k >= 1) return;
+  fx.save();
+  fx.globalAlpha = Math.min(1, (1 - k) * 2.2);
+  fx.font = `800 ${size * (0.8 + 0.4 * eOutBack(Math.min(1, k * 4), 3))}px Manrope`;
+  fx.textAlign = 'center';
+  fx.shadowColor = 'rgba(76,155,255,.95)'; fx.shadowBlur = 24;
+  const g = fx.createLinearGradient(0, y - size, 0, y);
+  g.addColorStop(0, '#EAF8FF'); g.addColorStop(0.5, '#9ED8FF'); g.addColorStop(1, '#4C9BFF');
+  fx.fillStyle = g;
+  fx.fillText(txt, x, y - 120 * eOutCubic(k));
+  fx.restore();
+}
+function drawGameFx(t, ev) {
+  // reticle locked ahead of the ship
+  const r = project(ev.reticle, game.cam);
+  let fire = 0;
+  for (const [tf] of SHOTS) if (t >= tf && t < tf + 0.2) fire = 1 - (t - tf) / 0.2;
+  fx.save();
+  fx.translate(r.x, r.y); fx.rotate(t * 0.8);
+  fx.globalCompositeOperation = 'lighter';
+  fx.strokeStyle = `rgba(158,216,255,${0.55 + 0.45 * fire})`; fx.lineWidth = 3;
+  const R = 46 - 8 * fire;
+  for (let i = 0; i < 4; i++) { fx.beginPath(); fx.arc(0, 0, R, i * Math.PI / 2 + 0.25, i * Math.PI / 2 + 1.3); fx.stroke(); }
+  fx.rotate(-t * 1.6);
+  for (let i = 0; i < 4; i++) { fx.rotate(Math.PI / 2); fx.beginPath(); fx.moveTo(R + 8, 0); fx.lineTo(R + 22, 0); fx.stroke(); }
+  fx.fillStyle = 'rgba(234,248,255,.9)'; fx.beginPath(); fx.arc(0, 0, 3.5, 0, 6.283); fx.fill();
+  fx.restore();
+  for (const h of ev.hits) {
+    const p = project(h.pos.clone().add(new THREE.Vector3(0, 0, ROCK_SPEED_FX * 0.6 * (t - h.t0))), game.cam);
+    burst(p.x, p.y, h.t0, t, 60, Math.round(h.t0 * 100), 480, 0.8, '255,190,120');
+    burst(p.x, p.y, h.t0, t, 36, Math.round(h.t0 * 100) + 1, 340, 0.7);
+    popText('+500', p.x, p.y - 40, prog(t, h.t0, h.t0 + 0.8));
+  }
+  for (const pk of ev.pickups) {
+    const p = project(pk.pos, game.cam);
+    const k = prog(t, pk.t0, pk.t0 + 0.8);
+    glowDot(p.x, p.y, 220 * (1 - k), 1 - k);
+    const rr = rng(Math.round(pk.t0 * 100));
+    for (let j = 0; j < 14; j++) {
+      const a = rr() * 6.283, d = 60 + rr() * 260;
+      glint(p.x + Math.cos(a) * d * eOutCubic(k), p.y + Math.sin(a) * d * eOutCubic(k), 8 + rr() * 14, 1 - k, rr() * 3);
+    }
+    popText('+250', p.x, p.y - 60, k, 54);
+  }
+}
+const ROCK_SPEED_FX = 46;
+
 function render(t) {
   bg.fillStyle = '#03060A'; bg.fillRect(0, 0, W, H);
   fx.clearRect(0, 0, W, H);
@@ -668,14 +589,9 @@ function render(t) {
   // WebGL
   const gs = globeState(t);
   if (inGame) {
-    const hits = updateGame(t);
-    renderer.render(gameScene, gameCam);
-    for (const h of hits) {
-      const p = project(h.pos, gameCam);
-      glowDot(p.x, p.y, 260 * (1 - prog(t, h.t0, h.t0 + 0.35)) + 1, 1 - prog(t, h.t0, h.t0 + 0.35));
-      burst(p.x, p.y, h.t0, t, 70, Math.round(h.t0 * 100), 520, 0.8, '255,190,120');
-      burst(p.x, p.y, h.t0, t, 40, Math.round(h.t0 * 100) + 1, 380, 0.7);
-    }
+    const ev = game.update(t);
+    renderer.render(game.scene, game.cam);
+    drawGameFx(t, ev);
   } else if (gs) {
     const g = setGlobe(gs);
     drawHalo(W / 2, g.cy, g.r, gs.a);
@@ -767,6 +683,7 @@ function render(t) {
       c.el.style.filter = `brightness(${1 - 0.5 * Math.min(ao, 1)})`;
       c.el.style.zIndex = String(10 - Math.round(ao * 2));
       c.meta.style.opacity = String(clamp(1 - ao * 2.5));
+      c.svg.style.transform = `rotate(${Math.sin(t * 2.6 + i) * 2.2 * bob - o * 3}deg)`;
       const arrive = 5 + i * 0.5;
       c.gloss.style.backgroundPosition = (100 - 100 * eInOutCubic(prog(t, arrive + 0.12, arrive + 0.62))) + '% 0';
     });
@@ -812,8 +729,10 @@ function render(t) {
   show($('hud'), t, 11.05, 13.92, { from: 1, dy: -30, outDur: 0.12 });
   if (inGame) {
     const hitsSoFar = SHOTS.filter(s => t >= s[1]).length;
-    const score = Math.floor((t - 11) * 1310) + hitsSoFar * 500;
+    const got = PICKUPS.filter(p => t >= p).length;
+    const score = Math.floor((t - 11) * 1310) + hitsSoFar * 500 + got * 250;
     $('score').textContent = String(score).padStart(6, '0');
+    $('shield').style.width = (100 - 12 * Math.min(1, Math.max(0, (t - 12.3) * 3)) + 8 * got) + '%';
   }
   show($('w1'), t, 11.22, 13.9, { from: 2 });
   show($('w2'), t, 11.98, 13.9, { from: 2.2 });
@@ -917,7 +836,7 @@ window.ready = (async () => {
   await document.fonts.ready;
   // compile both scenes up front
   renderer.compile(globeScene, globeCam);
-  renderer.compile(gameScene, gameCam);
+  renderer.compile(game.scene, game.cam);
   return true;
 })();
 // reports visible text that falls outside TikTok's safe zone
