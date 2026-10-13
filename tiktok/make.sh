@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds every deliverable into tiktok/out/.
-#   ./make.sh                      (uses kits4u.com)
+#   ./make.sh                      (uses kits4u.store)
 #   URL=www.yoursite.co.uk ./make.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -8,6 +8,7 @@ cd "$(dirname "$0")"
 python3 audio.py
 [ "${SKIP_FRAMES:-}" = 1 ] || node render.mjs video
 node render.mjs cover
+node render.mjs profile
 # static gain to a loudness target (no dynamic loudnorm pumping)
 gain() { ffmpeg -hide_banner -i "$1" -af ebur128 -f null - 2>&1 | awk -v target="$2" '/^ +I:/{v=$2} END{printf "%.2f", target - v}'; }
 GMIX=$(gain out/mix.wav -14)

@@ -871,3 +871,36 @@ window.renderCover = async () => {
   logo.style.transform = 'translateY(-330px) scale(.6)';
   await nextFrame();
 };
+
+// TikTok profile picture: wordmark over the globe, framed for a circular crop
+// of the square 1080×1080 region from y = 420 to 1500.
+window.renderProfile = async () => {
+  render(21.9);
+  bg.fillStyle = '#03060A'; bg.fillRect(0, 0, W, H);
+  fx.clearRect(0, 0, W, H);
+  drawNebula(18, 1.3);
+  drawStars(20, 1);
+  const s = { D: 10.5, lat: 24, lon: 12, cy: 1250, sun: new THREE.Vector3(-0.75, 0.4, 0.55).normalize(), moon: { ang: -1.25, r: 1.5, size: 0.19 }, a: 1, boost: 2.6 };
+  const g = setGlobe(s);
+  drawHalo(W / 2, g.cy, g.r, 1.2);
+  renderer.render(globeScene, globeCam);
+  $('stage').style.transform = 'none';
+  document.querySelectorAll('#stage > .abs').forEach(el => (el.style.display = 'none'));
+  const logo = $('logo');
+  Object.assign(logo.style, { display: '', opacity: '1', filter: 'none', transform: 'none', top: '575px', fontSize: '262px' });
+  logo.querySelectorAll('.chrome').forEach(c => c.style.setProperty('--sheen', '45%'));
+  // soft orbit ring through the wordmark
+  fx.save();
+  fx.translate(540, 730); fx.rotate(-0.16);
+  const rg = fx.createLinearGradient(-400, 0, 400, 0);
+  rg.addColorStop(0, 'rgba(46,107,255,0)'); rg.addColorStop(0.3, 'rgba(158,216,255,.75)'); rg.addColorStop(0.7, 'rgba(234,248,255,.9)'); rg.addColorStop(1, 'rgba(46,107,255,0)');
+  fx.strokeStyle = rg; fx.lineWidth = 4;
+  fx.beginPath(); fx.ellipse(0, 0, 440, 112, 0, Math.PI * 0.02, Math.PI * 0.98); fx.stroke();
+  fx.restore();
+  glowDot(540 + 360, 730 + 22, 36, 1);
+  // round vignette so the edge of the circle stays dark
+  const v = fx.createRadialGradient(540, 960, 380, 540, 960, 560);
+  v.addColorStop(0, 'rgba(3,6,10,0)'); v.addColorStop(1, 'rgba(3,6,10,0.6)');
+  fx.fillStyle = v; fx.fillRect(0, 420, W, 1080);
+  await nextFrame();
+};

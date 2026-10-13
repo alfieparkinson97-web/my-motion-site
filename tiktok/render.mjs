@@ -2,6 +2,7 @@
 //   node render.mjs preview            → out/preview/*.png key frames + contact sheet
 //   node render.mjs video              → out/frames.mp4 (silent, 30fps)
 //   node render.mjs cover              → out/kits4u-launch-cover.png
+//   node render.mjs profile            → out/kits4u-tiktok-profile.png (1080×1080)
 // Set the site address with URL=yoursite.com
 import http from 'node:http';
 import fs from 'node:fs';
@@ -13,7 +14,7 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const OUT = path.join(ROOT, 'tiktok', 'out');
 const FPS = 30, DURATION = 22;
 const mode = process.argv[2] || 'preview';
-const SITE_URL = process.env.URL || 'kits4u.com';
+const SITE_URL = process.env.URL || 'kits4u.store';
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 const server = http.createServer((req, res) => {
@@ -57,6 +58,10 @@ if (mode === 'preview') {
     }
   }
   console.log('safe-zone check done');
+} else if (mode === 'profile') {
+  await page.evaluate(() => window.renderProfile());
+  await page.screenshot({ path: path.join(OUT, 'kits4u-tiktok-profile.png'), clip: { x: 0, y: 420, width: 1080, height: 1080 } });
+  console.log('profile picture written');
 } else if (mode === 'cover') {
   await page.evaluate(() => window.renderCover());
   await page.screenshot({ path: path.join(OUT, 'kits4u-launch-cover.png') });
