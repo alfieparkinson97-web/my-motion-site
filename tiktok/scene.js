@@ -2,11 +2,22 @@
 // render.mjs calls window.renderFrame(t) for each frame and screenshots the page.
 import * as THREE from 'three';
 import { createGame, SHOTS, PICKUPS } from './game.js';
-import { detailedShirtSVG } from './shirt.js';
+import { realisticShirtURL } from './realshirt.js';
 
 const K = window.K4U;
 const W = 1080, H = 1920;
-export const DURATION = 22;
+export const DURATION = 22; // story seconds
+
+// Playback is slower than the story: each scene is stretched by its own
+// amount so text has time to be read. Keep in sync with audio.py.
+const TIME_STORY = [0, 2, 5, 8, 9, 10, 11, 14, 18, 22];
+const TIME_VIDEO = [0, 3, 7.5, 13.5, 15.5, 17.5, 19.5, 24, 29, 34.5];
+function storyTime(T) {
+  for (let i = 1; i < TIME_VIDEO.length; i++) {
+    if (T <= TIME_VIDEO[i]) return lerp(TIME_STORY[i - 1], TIME_STORY[i], (T - TIME_VIDEO[i - 1]) / (TIME_VIDEO[i] - TIME_VIDEO[i - 1]));
+  }
+  return DURATION;
+}
 
 /* ---------- maths ---------- */
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -374,10 +385,10 @@ const CARDS = KITS.map(kit => {
   const el = document.createElement('div');
   el.className = 'card';
   const label = K.types[kit.type].label + (kit.type === 'retro' ? ' ' + kit.season : '');
-  el.innerHTML = '<div class="in">' + detailedShirtSVG(kit) + '<div class="meta"><div class="nation">' + K.countries[kit.country].name +
+  el.innerHTML = '<div class="in"><div class="photo"><img class="shirt" alt=""></div>' + '<div class="meta"><div class="nation">' + K.countries[kit.country].name +
     '</div><div class="type">' + label.toUpperCase() + '</div></div><div class="gloss"></div></div>';
   cardsEl.appendChild(el);
-  return { el, meta: el.querySelector('.meta'), gloss: el.querySelector('.gloss'), svg: el.querySelector('svg') };
+  return { el, meta: el.querySelector('.meta'), gloss: el.querySelector('.gloss'), img: el.querySelector('img.shirt'), kit };
 });
 
 // extra flags not in the storefront set
@@ -615,7 +626,8 @@ function render(t) {
   show($('s1b'), t, 0.82, 1.98, { from: 1.9, dy: 30 });
 
   /* ---- 2 · spin the globe, flags branch out ---- */
-  show($('s2'), t, 2.12, 4.7, { from: 1.6 });
+  show($('s2'), t, 2.12, 3.82, { from: 1.6 });
+  show($('s2b'), t, 3.86, 4.7, { from: 1.5 });
   if (t >= 2 && t < 5 && gs) {
     const center = project(new THREE.Vector3(0, 0, 0), globeCam);
     FLAGS.forEach((f, i) => {
@@ -683,7 +695,6 @@ function render(t) {
       c.el.style.filter = `brightness(${1 - 0.5 * Math.min(ao, 1)})`;
       c.el.style.zIndex = String(10 - Math.round(ao * 2));
       c.meta.style.opacity = String(clamp(1 - ao * 2.5));
-      c.svg.style.transform = `rotate(${Math.sin(t * 2.6 + i) * 2.2 * bob - o * 3}deg)`;
       const arrive = 5 + i * 0.5;
       c.gloss.style.backgroundPosition = (100 - 100 * eInOutCubic(prog(t, arrive + 0.12, arrive + 0.62))) + '% 0';
     });
@@ -835,6 +846,10 @@ window.ready = (async () => {
     document.fonts.load('italic 400 100px "Instrument Serif"')
   ]);
   await document.fonts.ready;
+  for (const [i, c] of CARDS.entries()) {
+    c.img.src = await realisticShirtURL(c.kit, i * 1.7);
+    await c.img.decode();
+  }
   // compile both scenes up front
   renderer.compile(globeScene, globeCam);
   renderer.compile(game.scene, game.cam);
@@ -862,7 +877,7 @@ window.safeCheck = () => {
   return bad;
 };
 window.setUrl = u => ($('urltext').textContent = u);
-window.renderFrame = async t => { COVER = false; render(t); await nextFrame(); };
+window.renderFrame = async T => { COVER = false; render(storyTime(T)); await nextFrame(); };
 window.renderCover = async () => {
   COVER = true;
   render(17.35);

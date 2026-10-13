@@ -1,5 +1,5 @@
 """kits4u TikTok soundtrack, synthesised from scratch (no samples, so it is
-free to use anywhere). 120 BPM, A minor, 22 seconds.
+free to use anywhere). 120 BPM, A minor, 34.5 seconds.
 
 Mixed for clarity: every sound has click-free envelopes, nothing is
 saturated, non-bass parts are high-passed to keep the low end clean, and the
@@ -17,13 +17,24 @@ from scipy.ndimage import maximum_filter1d
 from scipy.signal import butter, fftconvolve, sosfilt, sosfiltfilt
 
 SR = 44100
-DUR = 22.0
+# The visuals are written in "story" seconds (0–22) and played back slower.
+# These knots must match TIME_STORY / TIME_VIDEO in scene.js.
+STORY_KNOTS = (0, 2, 5, 8, 9, 10, 11, 14, 18, 22)
+VIDEO_KNOTS = (0, 3, 7.5, 13.5, 15.5, 17.5, 19.5, 24, 29, 34.5)
+
+
+def V(t):
+    """Story time → video time."""
+    return float(np.interp(t, STORY_KNOTS, VIDEO_KNOTS))
+
+
+DUR = VIDEO_KNOTS[-1]
 N = int(SR * DUR)
 BEAT = 0.5
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
 rng = np.random.default_rng(2010)
 
-# timings shared with the visuals (scene.js / game.js)
+# timings shared with the visuals (scene.js / game.js), in story seconds
 CUTS = (2, 5, 8, 9, 10, 11, 14, 18)
 SHOTS = ((11.55, 11.8), (12.05, 12.3), (12.55, 12.8), (13.3, 13.55), (13.6, 13.82))
 PICKUPS = (12.08, 12.6, 13.15)
@@ -256,7 +267,7 @@ def sparkle(d=1.2, density=14, seed=0):
     r = np.random.default_rng(seed)
     L = int((d + 0.6) * SR)
     t = np.arange(L) / SR
-    air = bp(pink(L / SR), 5000, 11000)
+    air = bp(pink((L + 2) / SR)[:L], 5000, 11000)
     env = np.sin(np.pi * np.clip(t / (d + 0.4), 0, 1)) ** 2
     out = pan2(air * env * 0.35, 0.0)
     for _ in range(density * 3):
@@ -314,8 +325,12 @@ def blip(m):
 
 
 # ================================================================ arrange
+BREAK = (V(14), V(16))   # breakdown before the launch reveal (24 → 26.5 s)
+OUTRO = 32.0             # drums drop out for the last few seconds
+
+
 def drums_on(t):
-    return t < 14 or 16 <= t < 20
+    return t < BREAK[0] or BREAK[1] <= t < OUTRO
 
 
 def music():
@@ -329,33 +344,33 @@ def music():
             place(drums, hat(open_=(i % 4 == 3)), b + 0.25, 0.5, 0.3)
             for s in (0.125, 0.375):
                 place(drums, hat(), b + s, 0.18, -0.3)
-    place(drums, kick(), 20.0, 0.95)
-    for t0 in (0.0, 2.0, 8.0, 16.0, 18.0):
+    place(drums, kick(), OUTRO, 0.95)
+    for t0 in (0.0, V(2), V(8), V(16), V(18)):
         place(drums, crash(), t0, 0.35, 0.15)
-    for k in range(16):  # snare build into the launch reveal
-        place(drums, snare(), 13.0 + k * 0.0625, 0.08 + 0.22 * k / 16)
-    place(drums, swell(1.0), 15.0, 0.5)
+    for k in range(12):  # snare build into the breakdown
+        place(drums, snare(), BREAK[0] - 1.5 + k * 0.125, 0.08 + 0.22 * k / 12)
+    place(drums, swell(1.0), BREAK[1] - 1.0, 0.5)
 
     for i in range(int(DUR / 0.25)):
         t0 = i * 0.25
         if drums_on(t0) and i % 2 == 1:
             place(bass, bass_note(ROOTS[chord_at(t0)], 0.23), t0, 0.5)
-    for t0 in (14.0, 20.0):
-        place(bass, bass_note(ROOTS[chord_at(t0)], 2.0), t0, 0.35)
+    for t0 in (BREAK[0], OUTRO):
+        place(bass, bass_note(ROOTS[chord_at(t0)], 2.5), t0, 0.35)
 
     pat = [0, 1, 2, 1, 2, 0, 1, 2]
-    for i in range(int(21.5 / 0.125)):
+    for i in range(int((DUR - 0.5) / 0.125)):
         t0 = i * 0.125
         notes = CHORDS[chord_at(t0)]
         m = notes[pat[i % 8]]
-        brk = 14 <= t0 < 16
+        brk = BREAK[0] <= t0 < BREAK[1]
         place(synth, pluck(mtof(m), bright=0.4 if brk else (0.7 if t0 < 2 else 1.0)), t0, 0.15 if brk else 0.2, 0.25 if i % 2 else -0.25)
     d = int(0.375 * SR)  # dotted-eighth ping-pong delay
     dl = hp(lp(synth, 4500), 300)
     synth[d:, 0] += dl[:-d, 1] * 0.22
     synth[d:, 1] += dl[:-d, 0] * 0.22
 
-    for bar in range(11):
+    for bar in range(int(np.ceil(DUR / 2))):
         place(padb, pad_chord(CHORDS[bar % 4], 2.0), bar * 2.0, 0.55)
 
     tgrid = np.arange(N) / SR
@@ -378,34 +393,34 @@ def sfx():
     place(fx, boom(), 0.0, 0.35)                              # hook impact
     place(fx, whoosh(0.8, 0.06, 5000, 300, 0.6, -0.6), 0.0, 0.35)
     for c in CUTS:                                            # whoosh into every cut
-        place(fx, whoosh(), c - 0.42, 0.42)
+        place(fx, whoosh(), V(c) - 0.42, 0.42)
     for k in range(1, 6):                                     # shirt cards sliding in
-        place(fx, whoosh(0.32, 0.2, 900, 5000, 0.6, -0.6), 5 + k * 0.5 - 0.2, 0.2)
+        place(fx, whoosh(0.32, 0.2, 900, 5000, 0.6, -0.6), V(5 + k * 0.5) - 0.2, 0.2)
     for i, m in enumerate((64, 67, 69, 71, 72, 74, 76)):      # flags popping out
-        place(fx, blip(m), 3.3 + i * 0.07, 0.3, -0.6 + i * 0.2)
-    place(fx, tap(), 4.18, 0.5)
-    place(fx, sparkle(1.4, 9, 2), 0.2, 0.18)                  # stars
-    place(fx, whoosh(0.42, 0.37, 2200, 7000, 0.8, -0.2), 10.06, 0.3)
-    place(fx, tap(), 10.45, 0.5)
-    place(fx, sparkle(0.5, 16, 3), 10.47, 0.45)
-    place(fx, blast(), 10.47, 0.25)
+        place(fx, blip(m), V(3.3 + i * 0.07), 0.3, -0.6 + i * 0.2)
+    place(fx, tap(), V(4.18), 0.5)
+    place(fx, sparkle(2.0, 9, 2), 0.3, 0.18)                  # stars
+    place(fx, whoosh(0.8, 0.74, 2200, 7000, 0.8, -0.2), V(10.08) - 0.04, 0.3)
+    place(fx, tap(), V(10.45), 0.5)
+    place(fx, sparkle(0.9, 16, 3), V(10.47), 0.45)
+    place(fx, blast(), V(10.47), 0.25)
     for tf, th in SHOTS:                                      # Asteroid Rush
-        place(fx, laser(), tf, 0.5, 0.15)
-        place(fx, blast(), th, 0.55, -0.15)
+        place(fx, laser(), V(tf), 0.5, 0.15)
+        place(fx, blast(), V(th), 0.55, -0.15)
     for tp in PICKUPS:
-        place(fx, coin(), tp, 0.4)
-    place(fx, riser(2.0), 14.0, 0.3)                          # launch
+        place(fx, coin(), V(tp), 0.4)
+    place(fx, riser(BREAK[1] - BREAK[0]), BREAK[0], 0.3)                          # launch
     n, t0, t1, last = 26, 14.95, 16.0, 0
     for s in range(int((t1 - t0) * SR / 64)):
         t = t0 + s * 64 / SR
         idx = int((1 - (1 - (t - t0) / (t1 - t0)) ** 3) * (n - 1))
         if idx != last:
-            place(fx, tick(), t, 0.3, 0.25 if idx % 2 else -0.25)
+            place(fx, tick(), V(t), 0.3, 0.25 if idx % 2 else -0.25)
             last = idx
-    place(fx, boom(), 16.0, 0.9)
-    place(fx, sparkle(1.8, 26, 4), 16.02, 0.4)
-    place(fx, whoosh(1.0, 0.04, 6000, 400, -0.6, 0.6), 16.0, 0.35)
-    place(fx, sparkle(1.6, 14, 5), 18.05, 0.3)
+    place(fx, boom(), V(16), 0.9)
+    place(fx, sparkle(2.2, 26, 4), V(16.02), 0.4)
+    place(fx, whoosh(1.0, 0.04, 6000, 400, -0.6, 0.6), V(16), 0.35)
+    place(fx, sparkle(2.0, 14, 5), V(18.05), 0.3)
     return hp(fx, 30)
 
 

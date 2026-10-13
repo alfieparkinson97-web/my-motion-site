@@ -12,7 +12,7 @@ import { chromium } from 'playwright';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const OUT = path.join(ROOT, 'tiktok', 'out');
-const FPS = 30, DURATION = 22;
+const FPS = 30, DURATION = 34.5; // video seconds (scene.js stretches the 22s story)
 const mode = process.argv[2] || 'preview';
 const SITE_URL = process.env.URL || 'kits4u.store';
 
@@ -41,7 +41,7 @@ fs.mkdirSync(OUT, { recursive: true });
 if (mode === 'preview') {
   const dir = path.join(OUT, 'preview');
   fs.mkdirSync(dir, { recursive: true });
-  const shots = (process.env.TIMES || '0.4,1.6,3.9,6.3,8.6,9.5,10.65,12.9,15.4,16.9,18.9,21.3').split(',').map(Number);
+  const shots = (process.env.TIMES || '1,2.6,5.4,10.5,14.5,16.5,18.7,22,25.5,27.8,30,33.5').split(',').map(Number);
   for (const t of shots) {
     await page.evaluate(t => window.renderFrame(t), t);
     const f = path.join(dir, `t${t.toFixed(2).padStart(5, '0')}.png`);
