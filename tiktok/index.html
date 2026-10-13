@@ -74,11 +74,14 @@ canvas.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920p
 .hud b { display: block; font-size: 68px; letter-spacing: .06em; margin-top: 4px }
 
 /* odometer */
-#odo { top: 740px; height: 300px; display: flex; justify-content: center; font-weight: 800; font-size: 300px; line-height: 300px; letter-spacing: -.04em }
-#odo .col { position: relative; height: 300px; overflow: hidden; width: .6em }
-#odo .col.dot { width: .26em }
-#odo .strip { position: absolute; left: 0; right: 0; top: 0; text-align: center }
-#odo .strip div { height: 300px }
+#odo { top: 740px; height: 300px; display: flex; justify-content: center; font-weight: 800; font-size: 285px; line-height: 300px; letter-spacing: -.04em }
+#odo .col { position: relative; height: 340px; margin: -20px -60px; width: calc(.6em + 120px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%) }
+#odo .col.dot { width: calc(.3em + 120px) }
+#odo .chrome { padding: 0 }
+#odo .strip { position: absolute; left: 60px; right: 60px; top: -40px; text-align: center }
+#odo .strip div { height: 420px; line-height: 420px }
 
 /* end card */
 #logo { top: 610px; font-size: 230px; line-height: 1 }
@@ -121,7 +124,7 @@ canvas.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920p
   <div id="w3" class="abs c sans" style="top:690px;font-size:170px">Shop.</div>
 
   <!-- 6 · launch -->
-  <div id="launching" class="abs c" style="top:640px;font-weight:800;font-size:76px;letter-spacing:.42em;text-indent:.42em;text-shadow:0 0 30px rgba(76,155,255,.9)">LAUNCHING</div>
+  <div id="launching" class="abs c" style="top:600px;font-weight:800;font-size:76px;letter-spacing:.42em;text-indent:.42em;text-shadow:0 0 30px rgba(76,155,255,.9)">LAUNCHING</div>
   <div id="odo" class="abs c"></div>
   <div id="sub6" class="abs c" style="top:1090px;font-weight:800;font-size:54px;letter-spacing:.3em;text-indent:.3em;color:#cfeaff;text-shadow:0 0 22px rgba(76,155,255,.9)">MONDAY <span class="serif" style="font-size:1.35em;letter-spacing:0;text-transform:none;font-weight:400">20 October</span></div>
 

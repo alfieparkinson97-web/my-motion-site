@@ -752,7 +752,7 @@ function render(t) {
       const k = eOutCubic(prog(t, 14.95, c.land));
       const idx = k * (c.n - 1);
       const speed = c.n * (1 - k);
-      c.strip.style.transform = `translateY(${-idx * 300}px)`;
+      c.strip.style.transform = `translateY(${-idx * 420}px)`;
       c.strip.style.filter = t < c.land ? `blur(${Math.min(6, speed * 0.25)}px)` : 'none';
     });
     // glow pulse on every beat after the lock

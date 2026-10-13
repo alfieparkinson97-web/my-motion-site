@@ -202,9 +202,9 @@ def chord_at(t):
 def pluck(freq, d=0.35, bright=1.0):
     t = tt(d)
     y = np.zeros_like(t)
-    for h, amp in ((1, 1.0), (2, 0.42), (3, 0.2), (4, 0.1), (5, 0.05)):
+    for h, amp in ((1, 1.0), (2, 0.5), (3, 0.33), (4, 0.22), (5, 0.15), (6, 0.1), (7, 0.06)):
         y += np.sin(2 * np.pi * freq * h * t) * amp * np.exp(-t * (5 + h * 6 / bright))
-    return y * ad(t, 0.003, 0.22) * 0.5
+    return lp(y * ad(t, 0.003, 0.18), 2600) * 0.5
 
 
 def pad_chord(notes, d):
@@ -230,13 +230,6 @@ def bass_note(m, d):
     return y * env
 
 
-def bell(m, d=0.6, pan=0.0):
-    t = tt(d)
-    f = mtof(m)
-    y = np.sin(2 * np.pi * f * t) * ad(t, 0.002, d / 3.5) + 0.25 * np.sin(2 * np.pi * f * 2.76 * t) * ad(t, 0.001, d / 9)
-    return pan2(y, pan)
-
-
 # ---------------------------------------------------------------- sfx
 def whoosh(d=0.6, peak=0.42, f0=250, f1=3800, pan_from=-0.7, pan_to=0.7):
     t = tt(d)
@@ -258,18 +251,19 @@ def boom():
     return body + sub2 + thump + air
 
 
-SPARK = [81, 85, 88, 90, 93, 97, 100]  # A major pentatonic, high and airy
-
-
-def sparkle(d=1.2, density=14, seed=0, base=0):
+def sparkle(d=1.2, density=14, seed=0):
+    """Airy glitter: a soft high noise shimmer with tiny grains, no pitched bells."""
     r = np.random.default_rng(seed)
-    out = np.zeros((int((d + 0.9) * SR), 2))
-    for _ in range(density):
-        o = r.random() * d
-        sig = bell(SPARK[r.integers(len(SPARK))] + base, 0.5 + r.random() * 0.4, r.random() * 1.4 - 0.7) * (0.25 + 0.35 * r.random())
-        i = int(o * SR)
-        out[i:i + len(sig)] += sig
-    return reverb(out, 1.3, 0.3, 8000)
+    L = int((d + 0.6) * SR)
+    t = np.arange(L) / SR
+    air = bp(pink(L / SR), 5000, 11000)
+    env = np.sin(np.pi * np.clip(t / (d + 0.4), 0, 1)) ** 2
+    out = pan2(air * env * 0.35, 0.0)
+    for _ in range(density * 3):
+        i = int(r.random() * d * SR)
+        g = bp(noise(0.03), 6000, 12000) * ad(tt(0.03), 0.001, 0.006) * (0.2 + 0.4 * r.random())
+        out[i:i + len(g)] += pan2(g, r.random() * 1.6 - 0.8)[: L - i]
+    return reverb(out, 1.0, 0.25, 9000)
 
 
 def tap():
@@ -294,13 +288,16 @@ def blast():
     return lp(pink(0.8), 700) * ad(t, 0.003, 0.16) * 1.1 + np.sin(2 * np.pi * 55 * t) * ad(t, 0.003, 0.18) * 0.5
 
 
-def chime():
-    out = np.zeros((int(0.8 * SR), 2))
-    for k, m in enumerate((88, 95, 100)):
-        b = bell(m, 0.5, -0.3 + 0.3 * k) * 0.5
-        i = int(k * 0.05 * SR)
-        out[i:i + len(b)] += b
-    return reverb(out, 0.9, 0.25, 9000)
+def coin():
+    out = np.zeros(int(0.35 * SR))
+    for k, m in enumerate((76, 83)):
+        t = tt(0.16)
+        f = mtof(m)
+        y = sum(np.sin(2 * np.pi * f * h * t) / h for h in range(1, 6))
+        y = lp(y * ad(t, 0.002, 0.05), 3500)
+        i = int(k * 0.07 * SR)
+        out[i:i + len(y)] += y * 0.5
+    return out
 
 
 def riser(d):
@@ -313,7 +310,7 @@ def riser(d):
 
 def blip(m):
     t = tt(0.25)
-    return np.sin(2 * np.pi * mtof(m) * t) * ad(t, 0.002, 0.06) * 0.5
+    return lp(np.sin(2 * np.pi * mtof(m) * t) + 0.3 * np.sin(4 * np.pi * mtof(m) * t), 3000) * ad(t, 0.002, 0.045) * 0.5
 
 
 # ================================================================ arrange
@@ -350,9 +347,9 @@ def music():
     for i in range(int(21.5 / 0.125)):
         t0 = i * 0.125
         notes = CHORDS[chord_at(t0)]
-        m = notes[pat[i % 8]] + 12 + (12 if i % 8 == 4 else 0)
+        m = notes[pat[i % 8]]
         brk = 14 <= t0 < 16
-        place(synth, pluck(mtof(m), bright=0.4 if brk else (0.7 if t0 < 2 else 1.0)), t0, 0.16 if brk else 0.22, 0.35 if i % 2 else -0.35)
+        place(synth, pluck(mtof(m), bright=0.4 if brk else (0.7 if t0 < 2 else 1.0)), t0, 0.15 if brk else 0.2, 0.25 if i % 2 else -0.25)
     d = int(0.375 * SR)  # dotted-eighth ping-pong delay
     dl = hp(lp(synth, 4500), 300)
     synth[d:, 0] += dl[:-d, 1] * 0.22
@@ -368,7 +365,7 @@ def music():
     padb *= pump[:, None]
     synth *= (0.75 + 0.25 * pump)[:, None]
 
-    synth = hp(synth, 180)
+    synth = hp(synth, 140)
     padb = hp(padb, 150)
     drums_hi = hp(drums, 30)
     mus = drums_hi + lp(bass, 900) + reverb(synth, 1.4, 0.18) + reverb(padb, 2.2, 0.25)
@@ -384,18 +381,19 @@ def sfx():
         place(fx, whoosh(), c - 0.42, 0.42)
     for k in range(1, 6):                                     # shirt cards sliding in
         place(fx, whoosh(0.32, 0.2, 900, 5000, 0.6, -0.6), 5 + k * 0.5 - 0.2, 0.2)
-    for i, m in enumerate((76, 79, 81, 83, 84, 86, 88)):      # flags popping out
-        place(fx, blip(m), 3.3 + i * 0.07, 0.28, -0.6 + i * 0.2)
+    for i, m in enumerate((64, 67, 69, 71, 72, 74, 76)):      # flags popping out
+        place(fx, blip(m), 3.3 + i * 0.07, 0.3, -0.6 + i * 0.2)
     place(fx, tap(), 4.18, 0.5)
-    place(fx, sparkle(1.4, 9, 2), 0.2, 0.25)                  # stars
+    place(fx, sparkle(1.4, 9, 2), 0.2, 0.18)                  # stars
     place(fx, whoosh(0.42, 0.37, 2200, 7000, 0.8, -0.2), 10.06, 0.3)
     place(fx, tap(), 10.45, 0.5)
-    place(fx, sparkle(0.5, 16, 3), 10.47, 0.6)
+    place(fx, sparkle(0.5, 16, 3), 10.47, 0.45)
+    place(fx, blast(), 10.47, 0.25)
     for tf, th in SHOTS:                                      # Asteroid Rush
         place(fx, laser(), tf, 0.5, 0.15)
         place(fx, blast(), th, 0.55, -0.15)
     for tp in PICKUPS:
-        place(fx, chime(), tp, 0.45)
+        place(fx, coin(), tp, 0.4)
     place(fx, riser(2.0), 14.0, 0.3)                          # launch
     n, t0, t1, last = 38, 14.95, 16.0, 0
     for s in range(int((t1 - t0) * SR / 64)):
@@ -405,8 +403,9 @@ def sfx():
             place(fx, tick(), t, 0.3, 0.25 if idx % 2 else -0.25)
             last = idx
     place(fx, boom(), 16.0, 0.9)
-    place(fx, sparkle(1.8, 26, 4), 16.02, 0.6)
-    place(fx, sparkle(1.6, 14, 5), 18.05, 0.45)
+    place(fx, sparkle(1.8, 26, 4), 16.02, 0.4)
+    place(fx, whoosh(1.0, 0.04, 6000, 400, -0.6, 0.6), 16.0, 0.35)
+    place(fx, sparkle(1.6, 14, 5), 18.05, 0.3)
     return hp(fx, 30)
 
 
