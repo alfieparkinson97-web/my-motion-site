@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kits4U Launch Ad</title>
+<!-- Built by ad/tools/build.cjs from ad/src/ad.html. Edit the source, then rebuild. -->
+<!--@FONTS-->
+<style>
+:root { --bg: #05070a; --volt: #c9f24a; --ink: #fff; }
+* { box-sizing: border-box }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden }
+#fit { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1920px; transform-origin: 50% 50%; transform: translate(-50%, -50%) }
+#stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); color: var(--ink);
+  font-family: 'Hanken Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased }
+#cam { position: absolute; inset: 0; transform-origin: 500px 900px }
+#gl { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: block }
+.layer { position: absolute; inset: 0; display: none }
+.fx { position: absolute; inset: 0; pointer-events: none; opacity: 0 }
+#dim { background: radial-gradient(120% 70% at 50% 40%, rgba(5,7,10,.2), rgba(5,7,10,.85)); }
+#black { background: #000; opacity: 1 }
+#flashW { background: #fff }
+#flashV { background: var(--volt) }
+#flashT { mix-blend-mode: screen }
+#vig { opacity: 1; background: radial-gradient(130% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55)) }
+
+/* type */
+.serif { font-family: 'Prata', Georgia, serif; font-weight: 400 }
+.stack { position: absolute; left: 60px; width: 880px; display: flex; flex-direction: column; align-items: center }
+.ln { display: block; white-space: nowrap; line-height: 1.04; text-align: center; will-change: transform, opacity, filter }
+.mask { display: block; overflow: hidden; padding: .02em .1em .14em; margin-bottom: -.1em; text-align: center; white-space: nowrap }
+.mask > span { display: inline-block; line-height: 1.04 }
+.volt { color: var(--volt) }
+.glow { filter: drop-shadow(0 0 26px rgba(201,242,74,.55)) }
+.shadow { text-shadow: 0 8px 40px rgba(0,0,0,.65) }
+
+/* scene 2 */
+#s2count { position: absolute; left: 60px; width: 880px; top: 196px; text-align: center; font-weight: 800; font-size: 46px; letter-spacing: .32em; color: var(--volt); padding-left: .32em }
+#s2box { position: absolute; left: 60px; width: 880px; top: 270px; height: 330px; display: flex; align-items: center; justify-content: center }
+#s2name, #s2ghost { position: absolute; white-space: nowrap; line-height: 1 }
+#s2ghost { color: transparent; -webkit-text-stroke: 3px rgba(255,255,255,.55) }
+#s2bar { position: absolute; left: 500px; top: 616px; height: 12px; width: 0; margin-left: 0; background: var(--volt); border-radius: 6px; box-shadow: 0 0 30px rgba(201,242,74,.7) }
+
+/* scene 3: jersey grid */
+.cell { position: absolute; width: 270px; height: 300px; perspective: 1400px }
+.card { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 26px;
+  background: linear-gradient(170deg, #f7f8fa, #dfe3e8); display: grid; place-items: center; overflow: hidden;
+  box-shadow: 0 24px 50px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.6) }
+.face.back { transform: rotateY(180deg); background: linear-gradient(170deg, #eef0f3, #cfd4db) }
+.face svg { width: 88%; height: auto; display: block }
+.face .tag { position: absolute; left: 14px; top: 14px; font: 700 17px/1 'Hanken Grotesk'; letter-spacing: .12em; background: #05070a; color: #fff; padding: 8px 11px; border-radius: 99px }
+
+/* scene 4: personalised jersey */
+#jwrap { perspective: 2000px; perspective-origin: 500px 960px }
+#jglow { position: absolute; left: 0; top: 380px; width: 1000px; height: 1160px; opacity: 0;
+  background: radial-gradient(closest-side, rgba(201,242,74,.38), rgba(201,242,74,0)) }
+#J { position: absolute; left: 100px; top: 520px; width: 800px; height: 880px; transform-style: preserve-3d; will-change: transform }
+.jf { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden }
+.jf.back { transform: rotateY(180deg) }
+.jf svg { position: absolute; inset: 0; width: 800px; height: 880px; display: block; overflow: visible }
+.jbg { position: absolute; inset: -64px -54px; border-radius: 87px; background: linear-gradient(170deg, #f7f8fa, #dfe3e8) }
+.jf.back .jbg { background: linear-gradient(170deg, #eef0f3, #cfd4db) }
+#ring { position: absolute; left: 50%; top: 53.2%; width: 10px; height: 10px; border-radius: 50%; border: 12px solid var(--volt);
+  transform: translate(-50%, -50%); opacity: 0; box-shadow: 0 0 40px rgba(201,242,74,.8), inset 0 0 40px rgba(201,242,74,.6) }
+
+/* scene 5: phone montage */
+#phoneWrap { perspective: 2400px; perspective-origin: 500px 1150px }
+#phone { position: absolute; left: 190px; top: 520px; width: 620px; height: 1342px; border-radius: 90px; padding: 16px;
+  background: linear-gradient(150deg, #39404a, #0c0e12 45%, #232830); transform-style: preserve-3d;
+  box-shadow: 0 70px 140px rgba(0,0,0,.7), 0 0 0 3px #4a525d inset, 0 0 140px rgba(201,242,74,.22) }
+#screen { position: relative; width: 588px; height: 1310px; border-radius: 74px; overflow: hidden; background: #05070a }
+#screen img { position: absolute; left: 0; top: 0; width: 588px; display: block; will-change: transform }
+#island { position: absolute; left: 50%; top: 34px; width: 170px; height: 48px; margin-left: -85px; border-radius: 30px; background: #000 }
+#sglare { position: absolute; inset: 0; background: linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.12) 48%, rgba(255,255,255,0) 60%); }
+.orb { position: absolute; width: 170px; height: 170px; will-change: transform; filter: drop-shadow(0 18px 30px rgba(0,0,0,.6)) }
+
+/* scene 6: end card */
+#logo { position: absolute; left: 60px; width: 880px; top: 178px; display: flex; align-items: center; justify-content: center; gap: 22px }
+#logo img { width: 92px; height: 92px }
+#logo span { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 100px; letter-spacing: -2px; line-height: 1 }
+#logo i { font-style: normal; color: var(--volt) }
+#date { position: absolute; left: 60px; width: 880px; top: 796px; text-align: center; font-weight: 600; font-size: 62px; letter-spacing: .01em }
+#date span { display: inline-block }
+#cta { position: absolute; left: 60px; width: 880px; top: 1376px; display: flex; justify-content: center }
+#cta .pill { display: inline-flex; align-items: center; gap: .4em; padding: .52em .87em .52em .56em; border-radius: 99px; background: var(--volt); color: #05070a;
+  font-weight: 800; font-size: 46px; letter-spacing: -.01em; white-space: nowrap; box-shadow: 0 0 60px rgba(201,242,74,.45), 0 20px 40px rgba(0,0,0,.5) }
+#cta .plus { width: 1.26em; height: 1.26em; border-radius: 50%; background: #05070a; color: var(--volt); display: grid; place-items: center; font-size: 1em; font-weight: 700; line-height: 1 }
+#ctaRing { position: absolute; inset: 0; border-radius: 99px; border: 5px solid var(--volt); opacity: 0 }
+#shine { background: linear-gradient(100deg, rgba(255,255,255,0) 44%, rgba(255,255,255,.9) 50%, rgba(255,255,255,0) 56%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; background-size: 300% 100%; background-repeat: no-repeat }
+
+/* preview-only helpers */
+#safe { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 50 }
+#safe div { position: absolute; background: rgba(255,0,90,.22); outline: 1px dashed #ff3d7f }
+#hud { position: fixed; left: 10px; bottom: 10px; z-index: 60; font: 600 12px/1.4 system-ui; color: #8a93a0; display: none }
+</style>
+</head>
+<body>
+<div id="fit">
+<div id="stage">
+  <div id="cam">
+    <canvas id="gl"></canvas>
+    <div class="fx" id="dim"></div>
+
+    <!-- 1. HOOK -->
+    <div class="layer" id="s1">
+      <div class="stack serif shadow" style="top:176px">
+        <span class="ln chk" id="h1a">YOUR</span>
+        <span class="ln chk" id="h1b">COUNTRY.</span>
+        <span class="ln chk volt glow" id="h1c">YOUR KIT.</span>
+      </div>
+    </div>
+
+    <!-- 2. NATIONS -->
+    <div class="layer" id="s2">
+      <div id="s2count" class="chk">01 / 08</div>
+      <div id="s2box"><span id="s2ghost" class="serif"></span><span id="s2name" class="serif shadow chk"></span></div>
+      <div id="s2bar"></div>
+    </div>
+
+    <!-- 3. KIT GRID -->
+    <div class="layer" id="s3">
+      <div class="stack serif shadow" style="top:166px">
+        <span class="mask chk"><span>The World&rsquo;s</span></span>
+        <span class="mask chk"><span class="volt glow">Finest Kits</span></span>
+      </div>
+      <div id="grid"></div>
+    </div>
+
+    <!-- 4. PERSONALISE -->
+    <div class="layer" id="s4">
+      <div class="stack serif shadow" style="top:166px">
+        <span class="mask chk"><span>Wear Your</span></span>
+        <span class="mask chk"><span class="volt glow">Passion</span></span>
+      </div>
+      <div class="layer" id="jwrap" style="display:block">
+        <div id="jglow"></div>
+        <div id="J">
+          <div class="jf front"><div class="jbg"></div></div>
+          <div class="jf back"><div class="jbg"></div><div id="ring"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. WEBSITE MONTAGE -->
+    <div class="layer" id="s5">
+      <div class="layer" id="phoneWrap" style="display:block">
+        <div id="phone">
+          <div id="screen">
+            <img id="imHero" alt="" src="%SHOT:hero%">
+            <img id="imHome" alt="" src="%SHOT:home%">
+            <img id="imCol" alt="" src="%SHOT:collections%">
+            <div id="sglare"></div>
+          </div>
+          <div id="island"></div>
+        </div>
+      </div>
+      <div class="stack serif shadow" id="s5a" style="top:166px">
+        <span class="mask chk"><span>Explore</span></span>
+        <span class="mask chk"><span class="volt glow">Kits for U</span></span>
+      </div>
+      <div class="stack serif shadow" id="s5b" style="top:166px">
+        <span class="mask chk"><span>Global Football</span></span>
+        <span class="mask chk"><span class="volt glow">Fashion, Delivered.</span></span>
+      </div>
+      <div id="orbs"></div>
+    </div>
+
+    <!-- 6. END CARD -->
+    <div class="layer" id="s6">
+      <div id="logo"><img class="chk" alt="" src="%MARK%"><span class="chk">kits<i>4u</i></span></div>
+      <div class="stack serif shadow" style="top:318px">
+        <span class="ln chk" id="e1">LAUNCHING</span>
+        <span class="ln chk" id="e2" style="position:relative"><span class="volt glow" id="e2v">20.10</span><span id="shine" style="position:absolute;left:0;top:0;width:100%;text-align:center">20.10</span></span>
+      </div>
+      <div id="date" class="shadow"><span id="dateIn" class="chk">Tuesday 20 October</span></div>
+      <div id="cta"><div class="pill chk" style="position:relative"><span class="plus">+</span><span>Follow so you don&rsquo;t miss the drop</span><span id="ctaRing"></span></div></div>
+    </div>
+  </div>
+
+  <div class="fx" id="flashT"></div>
+  <div class="fx" id="flashV"></div>
+  <div class="fx" id="flashW"></div>
+  <div class="fx" id="vig"></div>
+  <div class="fx" id="black"></div>
+  <div id="safe"><div style="left:0;top:0;width:1080px;height:150px"></div><div style="left:0;bottom:0;width:1080px;height:420px"></div><div style="right:0;top:150px;width:140px;height:1350px"></div></div>
+</div>
+</div>
+<div id="hud"></div>
+
+<!--@SITE:data.js-->
+<!--@SITE:flags.js-->
+<!--@SITE:jersey.js-->
+<!--@SITE:gl.js-->
+<!--@AD:ad.js-->
+</body>
+</html>

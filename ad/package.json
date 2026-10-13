@@ -1,0 +1,15 @@
+{
+  "name": "kits4u-launch-ad",
+  "private": true,
+  "description": "Kits4U TikTok launch ad: built from the site's own WebGL/jersey code, recorded with Playwright + ffmpeg.",
+  "scripts": {
+    "fonts": "node tools/fetch-fonts.cjs",
+    "shots": "node tools/capture-site.cjs",
+    "build": "node tools/build.cjs",
+    "record": "node tools/build.cjs && node tools/record.cjs",
+    "stills": "node tools/build.cjs && node tools/record.cjs --stills"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "family": "Hanken Grotesk",
+    "weight": [
+      400,
+      800
+    ],
+    "file": "HankenGrotesk-400.woff2"
+  },
+  {
+    "family": "Poppins",
+    "weight": [
+      500,
+      500
+    ],
+    "file": "Poppins-500.woff2"
+  },
+  {
+    "family": "Poppins",
+    "weight": [
+      600,
+      600
+    ],
+    "file": "Poppins-600.woff2"
+  },
+  {
+    "family": "Poppins",
+    "weight": [
+      700,
+      700
+    ],
+    "file": "Poppins-700.woff2"
+  },
+  {
+    "family": "Prata",
+    "weight": [
+      400,
+      400
+    ],
+    "file": "Prata-400.woff2"
+  }
+]
