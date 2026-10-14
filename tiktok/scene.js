@@ -422,11 +422,11 @@ FLAGS.forEach(f => {
   f.el = el;
 });
 
-// odometer: each column rolls through random digits and lands on "20" (October)
+// odometer: each column rolls through random digits and lands on "27" (October)
 const ODO = [];
 {
   const r = rng(2010);
-  '20'.split('').forEach((ch, i) => {
+  '27'.split('').forEach((ch, i) => {
     const col = document.createElement('div');
     col.className = 'col' + (ch === '.' ? ' dot' : '');
     const strip = document.createElement('div');
