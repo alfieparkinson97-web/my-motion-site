@@ -1,13 +1,16 @@
 """kits4u TikTok soundtrack, synthesised from scratch (no samples, so it is
 free to use anywhere). 120 BPM, A minor, 34.5 seconds.
 
-Mixed for clarity: every sound has click-free envelopes, nothing is
-saturated, non-bass parts are high-passed to keep the low end clean, and the
-master runs through a smooth look-ahead limiter instead of a clipper.
+Music: an upbeat house groove (punchy kick, claps, shaker, a bass with
+enough upper harmonics to carry on phone speakers, tresillo piano stabs)
+under an original terrace-style "oh-oh" crowd chant.
+Sound effects are stadium sounds: crowd, ball kicks, referee's whistle,
+applause, soft swishes and pops.
 
 Writes:
-  out/mix.wav  music + sound effects
-  out/sfx.wav  sound effects only (for adding a trending sound in TikTok)
+  out/mix.wav    music + sound effects
+  out/sfx.wav    sound effects only (for adding a trending sound in TikTok)
+  out/music.wav  music only
 """
 import os
 import wave
@@ -161,125 +164,175 @@ def limiter(x, ceiling=0.89, look=0.004, release=0.12):
 
 # ---------------------------------------------------------------- drums
 def kick():
-    t = tt(0.4)
-    f = 48 + 95 * np.exp(-t / 0.03)
-    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * ad(t, 0.002, 0.2)
-    click = bp(noise(0.4), 1500, 5000) * ad(t, 0.0005, 0.003) * 0.12
-    return body + click
+    t = tt(0.42)
+    f = 52 + 110 * np.exp(-t / 0.025)
+    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * ad(t, 0.002, 0.22)
+    knock = np.sin(2 * np.pi * np.cumsum(f * 2.2) / SR) * ad(t, 0.001, 0.045) * 0.45   # audible on phone speakers
+    click = bp(noise(0.42), 2000, 6000) * ad(t, 0.0005, 0.004) * 0.25
+    return body + knock + click
 
 
 def clap():
     t = tt(0.35)
-    n = bp(pink(0.35), 1100, 4200)
+    n = bp(pink(0.35), 900, 4500)
     env = np.zeros_like(t)
-    for k, o in enumerate((0, 0.012, 0.024)):
+    for k, o in enumerate((0, 0.011, 0.022)):
         tk = np.clip(t - o, 0, None)
-        env += (t >= o) * ad(tk, 0.001, 0.006 if k < 2 else 0.09)
-    return n * env * 1.4
+        env += (t >= o) * ad(tk, 0.001, 0.006 if k < 2 else 0.1)
+    return n * env * 1.6
 
 
 def hat(open_=False):
     d = 0.3 if open_ else 0.08
     t = tt(d)
-    return bp(noise(d), 7000, 13000) * ad(t, 0.001, 0.07 if open_ else 0.016) * 0.32
+    return bp(noise(d), 6500, 12000) * ad(t, 0.001, 0.08 if open_ else 0.018) * 0.35
 
 
-def snare():
-    t = tt(0.22)
-    tone = np.sin(2 * np.pi * 200 * t) * ad(t, 0.001, 0.04)
-    return bp(pink(0.22), 1800, 7000) * ad(t, 0.001, 0.06) * 1.6 + tone * 0.4
+def shaker():
+    t = tt(0.1)
+    return bp(noise(0.1), 4500, 9000) * ad(t, 0.02, 0.025) * 0.25
 
 
-def swell(d):
-    """Reverse-cymbal style swell."""
-    t = tt(d)
-    return hp(pink(d), 3500) * (t / d) ** 3 * 0.8
+def tom(m):
+    t = tt(0.4)
+    f = mtof(m) * (1 + 0.6 * np.exp(-t / 0.03))
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * ad(t, 0.002, 0.16) + bp(pink(0.4), 200, 2000) * ad(t, 0.001, 0.02) * 0.3
 
 
 def crash():
     t = tt(2.2)
-    return bp(pink(2.2), 4000, 12000) * ad(t, 0.003, 0.7) * 0.9
+    return bp(pink(2.2), 3500, 12000) * ad(t, 0.003, 0.7) * 0.9
 
 
 # ---------------------------------------------------------------- tonal
-CHORDS = [(57, 60, 64), (53, 57, 60), (48, 52, 55), (55, 59, 62)]  # Am F C G
-ROOTS = [33, 29, 36, 31]
+CHORDS = [(57, 60, 64, 69), (53, 57, 60, 65), (55, 60, 64, 67), (55, 59, 62, 67)]  # Am F C G
+ROOTS = [45, 41, 48, 43]                                                          # A2 F2 C3 G2
 
 
 def chord_at(t):
     return int(t // 2) % 4
 
 
-def pluck(freq, d=0.35, bright=1.0):
-    t = tt(d)
+def piano(m, d=0.45, vel=1.0):
+    """Bright house piano: inharmonic partials, two detuned strings, hammer."""
+    t = tt(d + 0.6)
+    f = mtof(m)
     y = np.zeros_like(t)
-    for h, amp in ((1, 1.0), (2, 0.5), (3, 0.33), (4, 0.22), (5, 0.15), (6, 0.1), (7, 0.06)):
-        y += np.sin(2 * np.pi * freq * h * t) * amp * np.exp(-t * (5 + h * 6 / bright))
-    return lp(y * ad(t, 0.003, 0.18), 2600) * 0.5
+    for det in (-0.0005, 0.0005):
+        for h in range(1, 11):
+            fh = f * h * np.sqrt(1 + 0.0004 * h * h) * (1 + det)
+            if fh > 9000:
+                break
+            y += np.sin(2 * np.pi * fh * t + h) / h ** 1.15 * np.exp(-t * (1.6 + 0.9 * h))
+    y *= ad(t, 0.002, 1.2) * np.where(t < d, 1.0, np.exp(-(t - d) / 0.08))
+    y += bp(noise(d + 0.6), 1500, 5000) * ad(t, 0.0005, 0.006) * 0.08
+    return y * 0.32 * vel
 
 
-def pad_chord(notes, d):
-    t = tt(d)
-    y = np.zeros_like(t)
-    for m in notes:
-        for det in (-0.08, 0.0, 0.07):
-            f = mtof(m + 12 + det)
-            ph = rng.random() * 6.283
-            # soft "saw" from 6 harmonics
-            for h in range(1, 7):
-                y += np.sin(2 * np.pi * f * h * t + ph * h) / h
-    y = lp(y, 1100, 2) / (len(notes) * 3 * 2.4)
-    env = np.minimum(1, t / 0.35) * np.minimum(1, (d - t) / 0.35)
-    return y * env
-
-
-def bass_note(m, d):
+def bass(m, d=0.22):
     t = tt(d)
     f = mtof(m)
-    y = np.sin(2 * np.pi * f * t) + 0.22 * np.sin(2 * np.pi * 2 * f * t) + 0.08 * np.sin(2 * np.pi * 3 * f * t)
-    env = np.minimum(1, t / 0.006) * np.minimum(1, (d - t) / 0.02) * (0.6 + 0.4 * np.exp(-t / 0.15))
-    return y * env
+    y = sum(np.sin(2 * np.pi * f * h * t) * np.exp(-h / 4.0) / h ** 0.5 for h in range(1, 11))
+    y += np.sin(np.pi * f * t) * 0.5                       # sub an octave down
+    env = np.minimum(1, t / 0.004) * np.minimum(1, (d - t) / 0.02) * (0.65 + 0.35 * np.exp(-t / 0.08))
+    return y * env * 0.42
 
 
-# ---------------------------------------------------------------- sfx
-def whoosh(d=0.6, peak=0.42, f0=250, f1=3800, pan_from=-0.7, pan_to=0.7):
-    t = tt(d)
-    n = sweep_bp(pink(d), f0, f1, 0.6)
-    env = np.where(t < peak, 0.5 - 0.5 * np.cos(np.pi * t / peak), np.exp(-(t - peak) / 0.09))
-    y = lp(n * env, 7000)
-    pan = np.linspace(pan_from, pan_to, len(t))
-    l, r = np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4)
-    return np.stack([y * l, y * r], axis=1) * 2.4
+# terrace-style crowd chant on "oh" (formant synthesis, several singers)
+OH = ((450, 80, 1.0), (800, 100, 0.55), (2830, 160, 0.12))
+AH = ((730, 90, 1.0), (1090, 110, 0.5), (2440, 160, 0.12))
 
 
-def boom():
-    t = tt(3.2)
-    f = 34 + 52 * np.exp(-t / 0.22)
-    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * ad(t, 0.004, 1.1)
-    sub2 = np.sin(2 * np.pi * np.cumsum(f * 2) / SR) * ad(t, 0.003, 0.25) * 0.25
-    thump = lp(pink(3.2), 900) * ad(t, 0.002, 0.05) * 0.5
-    air = bp(pink(3.2), 300, 2500) * ad(t, 0.01, 0.5) * 0.12
-    return body + sub2 + thump + air
+def formant_amp(f, vowel):
+    return sum(g / (1 + ((f - F) / B) ** 2) for F, B, g in vowel) + 0.015
 
 
-def sparkle(d=1.2, density=14, seed=0):
-    """Airy glitter: a soft high noise shimmer with tiny grains, no pitched bells."""
+def voice(m, d, vowel=OH, seed=0, vib=0.012):
     r = np.random.default_rng(seed)
-    L = int((d + 0.6) * SR)
-    t = np.arange(L) / SR
-    air = bp(pink((L + 2) / SR)[:L], 5000, 11000)
-    env = np.sin(np.pi * np.clip(t / (d + 0.4), 0, 1)) ** 2
-    out = pan2(air * env * 0.35, 0.0)
-    for _ in range(density * 3):
-        i = int(r.random() * d * SR)
-        g = bp(noise(0.03), 6000, 12000) * ad(tt(0.03), 0.001, 0.006) * (0.2 + 0.4 * r.random())
-        out[i:i + len(g)] += pan2(g, r.random() * 1.6 - 0.8)[: L - i]
-    return reverb(out, 1.0, 0.25, 9000)
+    t = tt(d)
+    f0 = mtof(m + (r.random() - 0.5) * 0.3) * (1 + vib * np.sin(2 * np.pi * (4.8 + r.random()) * t + r.random() * 6))
+    ph = 2 * np.pi * np.cumsum(f0) / SR
+    base = mtof(m)
+    y = np.zeros_like(t)
+    for h in range(1, int(4200 / base)):
+        y += np.sin(h * ph) * formant_amp(h * base, vowel) / h ** 0.6
+    breath = bp(noise(d), 600, 3000) * 0.02
+    env = np.minimum(1, t / 0.05) * np.minimum(1, (d - t) / 0.09)
+    return (y + breath) * env
+
+
+def chant_note(m, d, voices=6, seed=0, vowel=OH):
+    r = np.random.default_rng(seed)
+    out = np.zeros((int((d + 0.05) * SR), 2))
+    for v in range(voices):
+        oct_ = -12 if v % 3 == 2 else 0                    # a few lower voices
+        y = voice(m + oct_, d, vowel, seed * 31 + v)
+        i = int(r.random() * 0.025 * SR)
+        s = pan2(y, r.random() * 1.4 - 0.7)
+        out[i:i + len(s)] += s[: len(out) - i]
+    return out / voices
+
+
+# original chant melody, 8 beats: (beat, length in beats, MIDI note)
+CHANT = [(0, 1, 57), (1, .5, 57), (1.5, .5, 60), (2, 1.5, 57), (3.5, .5, 55),
+         (4, 1, 52), (5, .5, 52), (5.5, .5, 55), (6, 1.8, 57)]
+
+
+# ---------------------------------------------------------------- stadium sfx
+def crowd_bed(d, seed=0):
+    r = np.random.default_rng(seed)
+    t = tt(d)
+    n = bp(pink(d), 250, 2600)
+    am = 0.7 + 0.3 * sum(np.sin(2 * np.pi * (0.2 + r.random() * 0.9) * t + r.random() * 6) for _ in range(4)) / 4
+    return np.stack([n * am, np.roll(n, 3000) * am], axis=1) * 0.5
+
+
+def roar(d, seed=0):
+    """Crowd cheer: noise bed plus many open-voiced 'ahh' singers, swelling."""
+    t = tt(d)
+    out = crowd_bed(d, seed) * 1.6
+    r = np.random.default_rng(seed)
+    for v in range(10):
+        m = 50 + r.integers(0, 14)
+        out[: len(t)] += pan2(voice(m, d, AH, seed * 7 + v, 0.03) * 0.12, r.random() * 1.6 - 0.8)
+    env = np.minimum(1, t / 0.35) * np.exp(-np.clip(t - 0.6, 0, None) / (d * 0.45))
+    return reverb(out * env[:, None], 1.8, 0.3, 4000)
+
+
+def whistle(d=0.55):
+    """Referee's pea whistle: ~2.9 kHz tone with the pea's fast trill."""
+    t = tt(d)
+    f = 2900 + 70 * np.sin(2 * np.pi * 27 * t)
+    tone = np.sin(2 * np.pi * np.cumsum(f) / SR) * (0.75 + 0.25 * np.sin(2 * np.pi * 27 * t))
+    breath = bp(noise(d), 2400, 4200) * 0.25
+    env = np.minimum(1, t / 0.015) * np.minimum(1, (d - t) / 0.03)
+    return reverb((tone + breath) * env * 0.4, 1.0, 0.2, 7000)
+
+
+def ball_kick():
+    t = tt(0.25)
+    f = 70 + 90 * np.exp(-t / 0.02)
+    thump = np.sin(2 * np.pi * np.cumsum(f) / SR) * ad(t, 0.001, 0.05)
+    slap = bp(noise(0.25), 700, 3500) * ad(t, 0.0005, 0.006) * 0.6
+    return thump + slap
+
+
+def swish(d=0.3):
+    t = tt(d)
+    n = sweep_bp(pink(d), 500, 2400, 0.7)
+    env = np.sin(np.pi * np.clip(t / d, 0, 1)) ** 2
+    return n * env * 0.9
+
+
+def pop():
+    t = tt(0.06)
+    f = 280 + 650 * np.exp(-t / 0.008)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * ad(t, 0.0008, 0.015) * 0.7
 
 
 def tap():
-    t = tt(0.06)
-    return np.sin(2 * np.pi * 1300 * t * (1 - 0.3 * t / 0.06)) * ad(t, 0.0008, 0.012) * 0.8
+    t = tt(0.04)
+    return bp(noise(0.04), 1500, 5000) * ad(t, 0.0004, 0.004) * 1.2
 
 
 def tick():
@@ -287,140 +340,137 @@ def tick():
     return bp(noise(0.025), 2200, 4200) * ad(t, 0.0004, 0.003) * 1.4
 
 
-def laser():
-    t = tt(0.2)
-    f = 420 + 1500 * np.exp(-t / 0.045)
-    y = np.sin(2 * np.pi * np.cumsum(f) / SR) * ad(t, 0.002, 0.05)
-    return lp(y, 6000) * 0.35
+def applause(d, seed=0, rate=260):
+    r = np.random.default_rng(seed)
+    out = np.zeros((int((d + 0.2) * SR), 2))
+    for _ in range(int(rate * d)):
+        i = int(r.random() * d * SR)
+        L = int(0.02 * SR)
+        c = bp(noise(0.02), 900 + r.random() * 1500, 4000) * ad(tt(0.02), 0.0005, 0.003 + r.random() * 0.003)
+        s = pan2(c * (0.3 + 0.7 * r.random()), r.random() * 1.8 - 0.9)
+        out[i:i + L] += s[: len(out) - i]
+    t = np.arange(len(out)) / SR
+    env = np.minimum(1, t / 0.5) * np.minimum(1, (len(out) / SR - t) / 0.6)
+    return reverb(out * env[:, None] * 0.8, 1.2, 0.3, 6000)
 
 
-def blast():
-    t = tt(0.8)
-    return lp(pink(0.8), 700) * ad(t, 0.003, 0.16) * 1.1 + np.sin(2 * np.pi * 55 * t) * ad(t, 0.003, 0.18) * 0.5
-
-
-def coin():
-    out = np.zeros(int(0.35 * SR))
-    for k, m in enumerate((76, 83)):
-        t = tt(0.16)
-        f = mtof(m)
-        y = sum(np.sin(2 * np.pi * f * h * t) / h for h in range(1, 6))
-        y = lp(y * ad(t, 0.002, 0.05), 3500)
-        i = int(k * 0.07 * SR)
-        out[i:i + len(y)] += y * 0.5
-    return out
-
-
-def riser(d):
-    t = tt(d)
-    n = sweep_bp(pink(d), 300, 7000, 0.35)
-    f = 220 * (8 ** (t / d))
-    tone = np.sin(2 * np.pi * np.cumsum(f) / SR) * 0.08
-    return (n * 1.4 + tone) * (t / d) ** 2.2
-
-
-def blip(m):
-    t = tt(0.25)
-    return lp(np.sin(2 * np.pi * mtof(m) * t) + 0.3 * np.sin(4 * np.pi * mtof(m) * t), 3000) * ad(t, 0.002, 0.045) * 0.5
+def big_hit():
+    t = tt(2.5)
+    low = np.sin(2 * np.pi * np.cumsum(45 + 60 * np.exp(-t / 0.06)) / SR) * ad(t, 0.002, 0.45)
+    drum = tom(45)
+    out = np.zeros(len(t))
+    out[: len(drum)] += drum * 0.8
+    return out + low
 
 
 # ================================================================ arrange
-BREAK = (V(14), V(16))   # breakdown before the launch reveal (24 → 26.5 s)
-OUTRO = 32.0             # drums drop out for the last few seconds
+FILL = (V(14) - 1.5, V(14))          # tom fill into the breakdown (22.5 → 24 s)
+BREAK = (V(14), V(16))               # breakdown before the launch reveal (24 → 26.5 s)
+OUTRO = 32.0                         # drums drop out for the last bars
 
 
 def drums_on(t):
-    return t < BREAK[0] or BREAK[1] <= t < OUTRO
+    return t < FILL[0] or BREAK[1] <= t < OUTRO
 
 
 def music():
-    drums, bass, synth, padb = buf(), buf(), buf(), buf()
+    drums, bassb, keys, voxb = buf(), buf(), buf(), buf()
     for i in range(int(DUR / BEAT)):
         b = i * BEAT
         if drums_on(b):
-            place(drums, kick(), b, 0.95)
+            place(drums, kick(), b, 0.9)
             if i % 2 == 1:
-                place(drums, clap(), b, 0.4, 0.08)
+                place(drums, clap(), b, 0.5, 0.05)
             place(drums, hat(open_=(i % 4 == 3)), b + 0.25, 0.5, 0.3)
             for s in (0.125, 0.375):
-                place(drums, hat(), b + s, 0.18, -0.3)
-    place(drums, kick(), OUTRO, 0.95)
+                place(drums, shaker(), b + s, 0.6, -0.3)
+    for k, m in enumerate((50, 50, 47, 47, 45, 45, 43, 43, 40, 40, 38, 38)):   # tom fill
+        place(drums, tom(m), FILL[0] + k * 0.125, 0.55, -0.5 + k / 11)
+    place(drums, kick(), OUTRO, 0.9)
     for t0 in (0.0, V(2), V(8), V(16), V(18)):
         place(drums, crash(), t0, 0.35, 0.15)
-    for k in range(12):  # snare build into the breakdown
-        place(drums, snare(), BREAK[0] - 1.5 + k * 0.125, 0.08 + 0.22 * k / 12)
-    place(drums, swell(1.0), BREAK[1] - 1.0, 0.5)
 
+    # bass: root on the beat, bouncing octaves on the offbeats
     for i in range(int(DUR / 0.25)):
         t0 = i * 0.25
-        if drums_on(t0) and i % 2 == 1:
-            place(bass, bass_note(ROOTS[chord_at(t0)], 0.23), t0, 0.5)
+        if not drums_on(t0):
+            continue
+        pos = i % 8
+        if pos in (0, 2, 3, 4, 6, 7):
+            root = ROOTS[chord_at(t0)]
+            place(bassb, bass(root + (12 if pos in (3, 7) else 0)), t0, 0.55)
     for t0 in (BREAK[0], OUTRO):
-        place(bass, bass_note(ROOTS[chord_at(t0)], 2.5), t0, 0.35)
+        place(bassb, bass(ROOTS[chord_at(t0)], 2.4), t0, 0.4)
 
-    pat = [0, 1, 2, 1, 2, 0, 1, 2]
-    for i in range(int((DUR - 0.5) / 0.125)):
-        t0 = i * 0.125
-        notes = CHORDS[chord_at(t0)]
-        m = notes[pat[i % 8]]
-        brk = BREAK[0] <= t0 < BREAK[1]
-        place(synth, pluck(mtof(m), bright=0.4 if brk else (0.7 if t0 < 2 else 1.0)), t0, 0.15 if brk else 0.2, 0.25 if i % 2 else -0.25)
-    d = int(0.375 * SR)  # dotted-eighth ping-pong delay
-    dl = hp(lp(synth, 4500), 300)
-    synth[d:, 0] += dl[:-d, 1] * 0.22
-    synth[d:, 1] += dl[:-d, 0] * 0.22
-
+    # house piano stabs (tresillo) — held chords in the breakdown and outro
     for bar in range(int(np.ceil(DUR / 2))):
-        place(padb, pad_chord(CHORDS[bar % 4], 2.0), bar * 2.0, 0.55)
+        b0 = bar * 2.0
+        chord = CHORDS[bar % 4]
+        if BREAK[0] <= b0 < BREAK[1] - 1.0 or b0 >= OUTRO:
+            for m in chord:
+                place(keys, piano(m, 1.9, 0.8), b0, 1.0, (m - 60) / 20)
+            continue
+        if b0 >= FILL[0] and b0 < BREAK[0]:
+            continue
+        for e in (0, 3, 6, 10, 13):                      # stab positions in 16ths within the bar
+            t0 = b0 + e * 0.125
+            if BREAK[0] <= t0 < BREAK[1]:
+                continue
+            for m in chord:
+                place(keys, piano(m, 0.22, 0.9 if e in (0, 10) else 0.7), t0, 1.0, (m - 60) / 20)
+
+    # the chant
+    for start in (0.0, 8.0, 16.0, BREAK[1], BREAK[1] + 4.0):
+        for k, (bt, ln, m) in enumerate(CHANT):
+            place(voxb, chant_note(m, ln * BEAT * 0.92, 6, int(start * 10) + k), start + bt * BEAT, 0.9)
 
     tgrid = np.arange(N) / SR
     on = np.array([drums_on(x) for x in (tgrid // BEAT) * BEAT])
-    pump = np.where(on, 1 - 0.45 * np.exp(-(tgrid % BEAT) / 0.11), 1.0)
-    bass *= pump[:, None]
-    padb *= pump[:, None]
-    synth *= (0.75 + 0.25 * pump)[:, None]
+    pump = np.where(on, 1 - 0.3 * np.exp(-(tgrid % BEAT) / 0.1), 1.0)
+    bassb *= pump[:, None]
+    keys *= (0.85 + 0.15 * pump)[:, None]
 
-    synth = hp(synth, 140)
-    padb = hp(padb, 150)
-    drums_hi = hp(drums, 30)
-    mus = drums_hi + lp(bass, 900) + reverb(synth, 1.4, 0.18) + reverb(padb, 2.2, 0.25)
-    fade = np.clip((DUR - tgrid) / 1.4, 0, 1) ** 1.5
+    mus = (hp(drums, 30) + lp(bassb, 2200) + reverb(hp(keys, 120), 1.2, 0.18)
+           + reverb(hp(voxb, 120), 2.4, 0.35, 5000) * 1.1)
+    fade = np.clip((DUR - tgrid) / 1.2, 0, 1) ** 1.5
     return mus * fade[:, None]
 
 
 def sfx():
     fx = buf()
-    place(fx, boom(), 0.0, 0.35)                              # hook impact
-    place(fx, whoosh(0.8, 0.06, 5000, 300, 0.6, -0.6), 0.0, 0.35)
-    for c in CUTS:                                            # whoosh into every cut
-        place(fx, whoosh(), V(c) - 0.42, 0.42)
-    for k in range(1, 6):                                     # shirt cards sliding in
-        place(fx, whoosh(0.32, 0.2, 900, 5000, 0.6, -0.6), V(5 + k * 0.5) - 0.2, 0.2)
-    for i, m in enumerate((64, 67, 69, 71, 72, 74, 76)):      # flags popping out
-        place(fx, blip(m), V(3.3 + i * 0.07), 0.3, -0.6 + i * 0.2)
-    place(fx, tap(), V(4.18), 0.5)
-    place(fx, sparkle(2.0, 9, 2), 0.3, 0.18)                  # stars
-    place(fx, whoosh(0.8, 0.74, 2200, 7000, 0.8, -0.2), V(10.08) - 0.04, 0.3)
-    place(fx, tap(), V(10.45), 0.5)
-    place(fx, sparkle(0.9, 16, 3), V(10.47), 0.45)
-    place(fx, blast(), V(10.47), 0.25)
-    for tf, th in SHOTS:                                      # Asteroid Rush
-        place(fx, laser(), V(tf), 0.5, 0.15)
-        place(fx, blast(), V(th), 0.55, -0.15)
+    place(fx, crowd_bed(DUR, 1), 0.0, 0.22)                    # stadium atmosphere throughout
+    place(fx, roar(2.6, 2), 0.0, 0.7)                          # hook: crowd cheer
+    place(fx, ball_kick(), 0.0, 0.9)
+    for c in CUTS:                                             # soft swish on every cut
+        place(fx, swish(), V(c) - 0.18, 0.45, -0.3 if c % 2 else 0.3)
+    for k in range(1, 6):                                      # shirt cards sliding in
+        place(fx, swish(0.22), V(5 + k * 0.5) - 0.12, 0.3, 0.4)
+    for i in range(7):                                         # flags popping out
+        place(fx, pop(), V(3.3 + i * 0.07), 0.6, -0.6 + i * 0.2)
+    place(fx, tap(), V(4.18), 0.8)
+    place(fx, swish(0.7), V(10.08), 0.35, 0.6)                 # shooting star
+    place(fx, tap(), V(10.45), 0.8)
+    place(fx, pop(), V(10.47), 0.8)
+    place(fx, roar(1.4, 3), V(10.47), 0.45)
+    for tf, th in SHOTS:                                       # Asteroid Rush
+        place(fx, ball_kick(), V(tf), 0.7, 0.15)
+        place(fx, roar(0.9, int(th * 100)), V(th), 0.35, -0.2)
     for tp in PICKUPS:
-        place(fx, coin(), V(tp), 0.4)
-    place(fx, riser(BREAK[1] - BREAK[0]), BREAK[0], 0.3)                          # launch
-    n, t0, t1, last = 26, 14.95, 16.0, 0
+        place(fx, pop(), V(tp), 0.7, 0.2)
+    place(fx, roar(BREAK[1] - BREAK[0], 5), BREAK[0], 0.35)     # crowd builds in the breakdown
+    n, t0, t1, last = 26, 14.95, 16.0, 0                       # countdown ticks
     for s in range(int((t1 - t0) * SR / 64)):
         t = t0 + s * 64 / SR
         idx = int((1 - (1 - (t - t0) / (t1 - t0)) ** 3) * (n - 1))
         if idx != last:
-            place(fx, tick(), V(t), 0.3, 0.25 if idx % 2 else -0.25)
+            place(fx, tick(), V(t), 0.4, 0.25 if idx % 2 else -0.25)
             last = idx
-    place(fx, boom(), V(16), 0.9)
-    place(fx, sparkle(2.2, 26, 4), V(16.02), 0.4)
-    place(fx, whoosh(1.0, 0.04, 6000, 400, -0.6, 0.6), V(16), 0.35)
-    place(fx, sparkle(2.0, 14, 5), V(18.05), 0.3)
+    place(fx, big_hit(), V(16), 0.9)                           # the reveal
+    place(fx, whistle(0.75), V(16), 0.55)
+    place(fx, roar(3.5, 6), V(16), 0.9)
+    place(fx, applause(DUR - V(18), 7), V(18), 0.7)            # end card
+    for t0, d in ((32.3, 0.22), (32.7, 0.22), (33.1, 0.8)):    # full-time whistle
+        place(fx, whistle(d), t0, 0.45)
     return hp(fx, 30)
 
 
@@ -438,6 +488,7 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     m = music()
     f = sfx()
-    write(os.path.join(OUT, "mix.wav"), m * 0.85 + f * 0.7)
+    write(os.path.join(OUT, "mix.wav"), m * 1.0 + f * 0.45)
     write(os.path.join(OUT, "sfx.wav"), f)
+    write(os.path.join(OUT, "music.wav"), m)
     print("audio written")
