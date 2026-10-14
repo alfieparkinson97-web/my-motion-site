@@ -2,7 +2,7 @@
 // render.mjs calls window.renderFrame(t) for each frame and screenshots the page.
 import * as THREE from 'three';
 import { createGame, SHOTS, PICKUPS } from './game.js';
-import { realisticShirtURL } from './realshirt.js';
+import { flatShirtSVG } from './flatshirt.js';
 
 const K = window.K4U;
 const W = 1080, H = 1920;
@@ -379,16 +379,17 @@ const game = createGame(renderer, rng);
 /* ======================================================================
    DOM: shirt cards, flags, text
    ====================================================================== */
-const KITS = ['eng-home', 'bra-retro', 'arg-home', 'ita-away', 'jpn-home', 'eng-retro'].map(K.kitById);
+const KITS = ['eng-home', 'bra-retro', 'arg-home', 'ita-away', 'jpn-home', 'ger-home'].map(K.kitById);
+const NUMBERS = [9, 11, 10, 7, 8, 13];
 const cardsEl = $('cards');
-const CARDS = KITS.map(kit => {
+const CARDS = KITS.map((kit, i) => {
   const el = document.createElement('div');
   el.className = 'card';
   const label = K.types[kit.type].label + (kit.type === 'retro' ? ' ' + kit.season : '');
-  el.innerHTML = '<div class="in"><div class="photo"><img class="shirt" alt=""></div>' + '<div class="meta"><div class="nation">' + K.countries[kit.country].name +
+  el.innerHTML = '<div class="in"><div class="photo">' + flatShirtSVG(kit, NUMBERS[i]) + '</div>' + '<div class="meta"><div class="nation">' + K.countries[kit.country].name +
     '</div><div class="type">' + label.toUpperCase() + '</div></div><div class="gloss"></div></div>';
   cardsEl.appendChild(el);
-  return { el, meta: el.querySelector('.meta'), gloss: el.querySelector('.gloss'), img: el.querySelector('img.shirt'), kit };
+  return { el, meta: el.querySelector('.meta'), gloss: el.querySelector('.gloss'), shirt: el.querySelector('svg.flatshirt'), kit };
 });
 
 // extra flags not in the storefront set
@@ -695,6 +696,7 @@ function render(t) {
       c.el.style.filter = `brightness(${1 - 0.5 * Math.min(ao, 1)})`;
       c.el.style.zIndex = String(10 - Math.round(ao * 2));
       c.meta.style.opacity = String(clamp(1 - ao * 2.5));
+      c.shirt.style.transform = `translateY(${Math.sin(t * 2.2 + i) * 6 * bob}px) rotate(${Math.sin(t * 1.6 + i) * 1.5 * bob}deg)`;
       const arrive = 5 + i * 0.5;
       c.gloss.style.backgroundPosition = (100 - 100 * eInOutCubic(prog(t, arrive + 0.12, arrive + 0.62))) + '% 0';
     });
@@ -846,10 +848,8 @@ window.ready = (async () => {
     document.fonts.load('italic 400 100px "Instrument Serif"')
   ]);
   await document.fonts.ready;
-  for (const [i, c] of CARDS.entries()) {
-    c.img.src = await realisticShirtURL(c.kit, i * 1.7);
-    await c.img.decode();
-  }
+  // let the flag badges inside the shirt SVGs decode before the first frame
+  await Promise.all([...document.querySelectorAll('svg.flatshirt image')].map(im => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = im.getAttribute('href'); })));
   // compile both scenes up front
   renderer.compile(globeScene, globeCam);
   renderer.compile(game.scene, game.cam);
