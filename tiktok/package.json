@@ -1,3 +1,1 @@
-{ "name": "kits4u-tiktok", "private": true, "type": "module",
-  "scripts": { "render": "node render.mjs" },
-  "dependencies": { "playwright": "1.56.0", "three": "0.160.0", "@fontsource/manrope": "5.1.0", "@fontsource/instrument-serif": "5.1.0" } }
+{"name":"kits4u-tiktok","private":true,"type":"module","scripts":{"render":"node render.mjs"},"dependencies":{"@fontsource/instrument-serif":"5.1.0","@fontsource/manrope":"5.1.0","@fontsource/press-start-2p":"5.1.0","playwright":"1.56.0","three":"0.160.0"}}
