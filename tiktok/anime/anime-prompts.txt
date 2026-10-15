@@ -1,0 +1,100 @@
+kits4u · "THE DIVE": anime-style TikTok · prompt pack
+=====================================================
+
+WHAT IT IS
+A 25-30 second, 9:16 hand-drawn anime short. A teenager kicking a ball about in a park at sunset
+imagines a World Cup night, scores a flying diving header, and comes back to the park.
+The ending says the new kits drop 27 Oct.
+
+WHICH TOOL
+Use any AI video tool that does image-to-video: Kling, Hailuo (MiniMax), Runway, Pika, Sora or Veo.
+It's best to work in 2 steps, so the character looks the same in every shot:
+  1) Make a STILL image of each shot with an image tool (ChatGPT/DALL·E, Midjourney, Ideogram, Leonardo).
+     Paste the STYLE + CHARACTER blocks into every prompt.
+  2) Turn each still into a 5-second clip with the tool's image-to-video. Use the MOTION line for that shot.
+Settings: 9:16 portrait, 5 s per clip, highest quality, camera motion "auto" unless the shot says otherwise.
+
+TIPS
+- Don't name real players, brands or studios ("in the style of Studio Ghibli" etc.). Many tools block it,
+  and you don't want a real player's face or a brand logo in an ad. The STYLE block below describes the look instead.
+- AI tools are bad at text. Leave all text out of the prompts and add it in CapCut or TikTok,
+  or send me the clips and I'll add it.
+- If a clip comes out wrong, re-run it with the same image. Small changes to the MOTION line help more than rewriting everything.
+
+
+──────────────── STYLE BLOCK (paste into every prompt) ────────────────
+hand-drawn 2D anime film style, clean cel shading, soft painterly backgrounds, warm natural light,
+gentle film grain, expressive but realistic proportions, smooth hand-animated motion, cinematic,
+vertical 9:16 composition, no text, no logos, no watermarks
+
+──────────────── CHARACTER BLOCK (paste into every prompt with him in it) ────────────────
+a 17-year-old footballer with short messy dark-brown hair, light-brown skin, athletic build,
+wearing a navy blue football shirt with thin orange stripes on the shoulders and an orange
+captain's armband, navy shorts, navy socks, bright orange football boots
+
+──────────────── NEGATIVE PROMPT (if the tool has one) ────────────────
+text, letters, logo, brand, watermark, extra fingers, extra limbs, distorted face, blurry,
+3D render, photorealistic, low quality, duplicate ball
+
+
+═════════════════════════════ SHOTS ═════════════════════════════
+
+SHOT 1 · 0-4s · THE PARK (hook)
+Image: [STYLE] [CHARACTER] juggling a white football with blue and orange swirls on his knee in a
+grassy city park at golden hour, tower blocks and trees in the background, long shadows, warm orange sky,
+low camera angle from the grass.
+Motion: he juggles the ball knee to knee, then flicks it high into the air with his foot; camera tilts up following the ball.
+
+SHOT 2 · 4-8s · INTO THE CLOUDS (the transition)
+Image: [STYLE] a white football with blue and orange swirls flying up into a glowing sunset sky full of
+big painted clouds, the clouds start to swirl and turn into the bright lights of a giant football stadium at night.
+Motion: camera rushes upward with the ball through the clouds, the sky changes from sunset orange to night blue, stadium floodlights flare on.
+
+SHOT 3 · 8-12s · WORLD CUP NIGHT
+Image: [STYLE] [CHARACTER] sprinting across a lush green pitch inside a packed stadium at night,
+floodlights glowing, huge crowd blurred in the background, determined face, wind in his hair, low side angle.
+Motion: tracking shot running alongside him at full speed, grass blades flicking up, crowd lights flickering.
+
+SHOT 4 · 12-17s · THE DIVE (hero shot, matches your reference image)
+Image: [STYLE] [CHARACTER] launching into a full-length flying diving header, body fully stretched and
+horizontal in mid-air, arms out to the sides, eyes locked on the white football just ahead of his head,
+seen from above against the bright green striped pitch.
+Motion: slow motion, he glides forward through the air toward the ball, his shirt ripples, camera slowly rotates above him.
+
+SHOT 5 · 17-21s · GOAL
+Image: [STYLE] [CHARACTER] on his knees sliding across the wet grass in front of a packed stadium at night,
+arms spread wide, shouting with joy, the football in the back of the net behind him, confetti in the air.
+Motion: he knee-slides toward the camera, the net ripples, confetti swirls, crowd erupts, camera shakes slightly.
+
+SHOT 6 · 21-25s · BACK TO THE PARK
+Image: [STYLE] [CHARACTER] standing in the same sunset city park from shot 1, the white football resting at
+his feet, smiling at the camera, warm golden light, a few leaves drifting.
+Motion: the ball drops from the sky and lands at his feet, he traps it, looks up at the camera and grins; light breeze.
+
+SHOT 7 · 25-29s · END CARD BACKGROUND (text gets added on top)
+Image: [STYLE] close-up of a navy blue football shirt with thin orange stripes hanging on a wooden peg in a
+sunlit bedroom, dust in the light, a football on the floor below, calm and warm, plenty of empty space at the top.
+Motion: very slow push-in, sunlight flickers gently, dust floats.
+Text to add on top (in CapCut/TikTok or by me):
+  NEW KITS DROP
+  27 OCT
+  kits4u.store
+
+
+═════════════════════════ EDITING IT TOGETHER ═════════════════════════
+- Put the clips in order: 1 2 3 4 5 6 7. Trim each to the times above (around 4 seconds).
+- Cut 2→3 on a beat drop. Slow down shot 4 even more (to 50%) for the dive.
+- Add a hook caption over shot 1 for the first 2 seconds: "wait for the dive 😳"
+- Sound: a cinematic or emotional build that explodes on the goal works best. In TikTok search
+  "anime", "cinematic" or "epic" (Business account: only Commercial sounds).
+- Or send me the 7 clips and I'll cut them on the beat, add the text and the ending,
+  and make an original soundtrack with crowd and goal sounds.
+
+
+CAPTION IDEAS
+1) Every kid in the park has scored this goal in their head 🥹⚽ New kits drop 27 Oct
+2) POV: the dream before the dive 🌅 kits4u.store · 27 Oct
+3) The goal you've replayed a thousand times 🎬 New kits 27 Oct
+
+HASHTAGS
+#anime #animeedit #football #footballtiktok #divingheader #footballshirts #worldcup2026 #fyp #animation #kits4u
