@@ -20,7 +20,7 @@ da.DUR, da.N, da.END = DUR, int(da.SR * DUR), 20.0
 SR, tt, ad, lp, pink, bp = da.SR, da.tt, da.ad, da.lp, da.pink, da.bp
 OUT = os.path.join(HERE, "out")
 HOOK_END, SLOT = 2.0, 3.0
-TIERS = ["A", "C", "B", "A", "S", "S"]          # reveal order, matches rank.js
+TIERS = ["S", "S", "S", "S", "S", "S"]          # reveal order, matches rank.js
 
 
 def deep_boom():
@@ -54,7 +54,7 @@ def sfx():
         if tier == "C":
             da.place(fx, deep_boom(), S + 1.5, 1.0)
         if tier == "S":
-            da.place(fx, da.roar(1.6, 20 + i), S + 1.5, 0.7)
+            da.place(fx, da.roar(1.6, 20 + i), S + 1.5, 0.35 + 0.08 * i)   # crowd gets louder every time
         da.place(fx, da.swish(0.5), S + 2.2, 0.45, -0.4)    # flies to the board
         da.place(fx, thud(), S + 2.75, 0.8)
     da.place(fx, da.hit(), 20.0, 0.9)

@@ -2,13 +2,13 @@
 const W = 1080, H = 1920;
 export const DURATION = 26;
 
-// order = reveal order; the ranking is deliberately spicy so people argue in the comments
+// order = reveal order; the joke is that every single one ends up in S tier
 const KITS = [
-  { key: 'germany', tier: 'A', score: '8.6', take: 'Clean. Simple. <span class="yel">Dangerous.</span> 🖤' },
-  { key: 'portugal', tier: 'C', score: '6.1', take: 'Looks like a <span class="yel">2007 screensaver</span> 💀' },
-  { key: 'italy', tier: 'B', score: '7.8', take: 'Michelangelo <span class="yel">designed this</span> 🎨' },
-  { key: 'england', tier: 'A', score: '8.9', take: 'The lion is <span class="yel">actually roaring</span> 🦁' },
-  { key: 'brazil', tier: 'S', score: '9.4', take: 'Wearing this = <span class="yel">instant blessing</span> 🙏' },
+  { key: 'germany', tier: 'S', score: '9.2', take: 'Clean. Simple. <span class="yel">Dangerous.</span> 🖤' },
+  { key: 'portugal', tier: 'S', score: '9.0', take: 'Waves so clean it\'s <span class="yel">illegal</span> 🌊' },
+  { key: 'italy', tier: 'S', score: '9.3', take: 'Michelangelo <span class="yel">designed this</span> 🎨' },
+  { key: 'england', tier: 'S', score: '9.5', take: 'The lion is <span class="yel">actually roaring</span> 🦁' },
+  { key: 'brazil', tier: 'S', score: '9.7', take: 'Wearing this = <span class="yel">instant blessing</span> 🙏' },
   { key: 'japan', tier: 'S', score: '9.9', take: '<span class="yel">Final boss</span> kit. No debate 🐉' }
 ];
 const TIERS = ['S', 'A', 'B', 'C'];
@@ -16,7 +16,7 @@ const TIER_COL = { S: '#ff6b6b', A: '#ffb36b', B: '#ffe14d', C: '#9be86b' };
 const HOOK_END = 2, SLOT = 3, END_START = HOOK_END + KITS.length * SLOT; // 20
 
 // board geometry
-const ROW_Y = [170, 316, 462, 608], ROW_H = 136, LABEL_X = 60, LABEL_W = 136, ROW_X = 206, ROW_R = 950, THUMB = 120;
+const ROW_Y = [170, 316, 462, 608], ROW_H = 136, LABEL_X = 60, LABEL_W = 136, ROW_X = 206, ROW_R = 950, THUMB = 108;
 // showcase card
 const CX = 540, CY = 1205, CS = 500;
 
