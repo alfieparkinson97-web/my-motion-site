@@ -36,3 +36,7 @@ Jersey artwork is generated as SVG by `assets/js/jersey.js`. To use real product
 ## Going live with payments
 
 Checkout runs in **test mode** (`K.config.testMode: true`). No payment is taken, and card details never leave the page. To take real payments, replace the body of `submitOrder()` in `assets/js/checkout.js` with your provider's flow (for example, a Stripe Checkout Session created on your server), then set `testMode: false`.
+
+## EX-15 (game)
+
+`ex15/index.html` is a standalone first-person horror chase game: escape the lab, fix the truck on the factory floor, and drive out through the caves while the robot EX-15 hunts you. It loads Three.js r128 from cdnjs; everything else (models, textures, sound) is generated in code. Open the file in a desktop browser and play with a keyboard and mouse.
