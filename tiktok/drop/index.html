@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kits4u Who's That Kit</title>
+<style>
+@font-face { font-family: 'Manrope'; font-weight: 700; src: url(../node_modules/@fontsource/manrope/files/manrope-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Manrope'; font-weight: 800; src: url(../node_modules/@fontsource/manrope/files/manrope-latin-800-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Instrument Serif'; font-style: italic; font-weight: 400; src: url(../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2) format('woff2'); }
+:root {
+  --chrome: linear-gradient(172deg, #EAF8FF 0%, #9ED8FF 26%, #4C9BFF 50%, #2E6BFF 66%, #A8E0FF 100%);
+}
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: #03060A }
+body { font-family: 'Manrope', 'Noto Color Emoji', sans-serif; color: #fff; -webkit-font-smoothing: antialiased }
+#stage { position: absolute; inset: 0; overflow: hidden }
+canvas { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px }
+.abs { position: absolute; left: 0; width: 1080px; text-align: center; will-change: transform, opacity }
+.big { font-weight: 800; letter-spacing: -.04em; line-height: .92; text-shadow: 0 0 40px rgba(76,155,255,.45), 0 8px 30px rgba(0,0,0,.7) }
+.chrome { background: var(--chrome); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 22px rgba(76,155,255,.6)) }
+.serif { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; letter-spacing: -.01em }
+.pill { display: inline-flex; align-items: center; gap: 14px; padding: 16px 34px; border-radius: 99px; font-weight: 800; font-size: 40px;
+  background: rgba(8,16,32,.82); border: 3px solid #9ED8FF; box-shadow: 0 0 34px rgba(76,155,255,.65) }
+.chip { display: inline-block; margin: 0 8px; padding: 14px 28px; border-radius: 22px; font-weight: 800; font-size: 44px; color: #03060A;
+  background: linear-gradient(180deg, #ffffff, #dff2ff); box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 4px rgba(76,155,255,.8) }
+.dots { display: flex; justify-content: center; gap: 16px }
+.dots i { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.18); border: 2px solid rgba(158,216,255,.6) }
+.dots i.on { background: #9ED8FF; box-shadow: 0 0 14px #4C9BFF }
+.tag { display: inline-block; margin-top: 14px; padding: 12px 30px; border-radius: 99px; font-weight: 800; font-size: 40px; letter-spacing: .14em;
+  color: #03060A; background: linear-gradient(180deg, #EAF8FF, #9ED8FF 55%, #4C9BFF); box-shadow: 0 0 30px rgba(76,155,255,.7) }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c" width="1080" height="1920"></canvas>
+
+  <!-- hook -->
+  <div id="hook1" class="abs big" style="top:330px;font-size:190px">WHO'S<br>THAT <span class="serif chrome" style="font-size:1.12em;letter-spacing:0">kit?</span></div>
+  <div id="hook2" class="abs" style="top:800px"><span class="pill">6 new drops. Get all 6? 👀</span></div>
+
+  <!-- per-kit -->
+  <div id="head" class="abs" style="top:170px"><div class="big" style="font-size:64px" id="headtxt">DROP 1/6</div><div class="dots" style="margin-top:20px" id="dots"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div id="q" class="abs big" style="top:600px;font-size:300px;color:#fff">?</div>
+  <div id="hint1" class="abs" style="top:1190px"><span class="chip" id="hint1t"></span></div>
+  <div id="hint2" class="abs" style="top:1300px"><span class="chip" id="hint2t"></span></div>
+  <div id="name" class="abs" style="top:1200px"><div class="big" style="font-size:120px" id="namet"></div><div class="tag" id="edt"></div></div>
+
+  <!-- end -->
+  <div id="end1" class="abs big" style="top:230px;font-size:92px">WHICH ONE<br>ARE YOU <span class="serif chrome" style="font-size:1.2em;letter-spacing:0">copping?</span> 👇</div>
+  <div id="end2" class="abs big" style="top:230px;font-size:100px">DROPPING<br><span class="chrome">27 OCT</span> 🔥</div>
+  <div id="end3" class="abs" style="top:1240px"><span class="pill" style="font-size:52px;padding:20px 48px" id="url">kits4u.store</span></div>
+  <div id="end4" class="abs" style="top:1390px;font-weight:800;font-size:46px;text-shadow:0 0 20px rgba(76,155,255,.8)">Follow so you don't miss it 🔔</div>
+</div>
+<script type="module" src="drop.js"></script>
+</body>
+</html>

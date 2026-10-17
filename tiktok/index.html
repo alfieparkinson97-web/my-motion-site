@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kits4u launch TikTok</title>
+<style>
+@font-face { font-family: 'Manrope'; font-weight: 600; src: url(node_modules/@fontsource/manrope/files/manrope-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Manrope'; font-weight: 700; src: url(node_modules/@fontsource/manrope/files/manrope-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Manrope'; font-weight: 800; src: url(node_modules/@fontsource/manrope/files/manrope-latin-800-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Instrument Serif'; font-style: italic; font-weight: 400; src: url(node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2) format('woff2'); }
+
+:root {
+  --bg: #03060A;
+  --chrome: linear-gradient(172deg, #EAF8FF 0%, #9ED8FF 26%, #4C9BFF 50%, #2E6BFF 66%, #A8E0FF 100%);
+  --gloss: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.95) 47%, rgba(255,255,255,.95) 50%, transparent 59%);
+}
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg) }
+body { font-family: 'Manrope', sans-serif; color: #fff; -webkit-font-smoothing: antialiased }
+#stage { position: absolute; inset: 0; overflow: hidden }
+canvas.layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px }
+
+.abs { position: absolute; will-change: transform, opacity, filter }
+.c { left: 0; width: 1080px; text-align: center } /* centred; content kept within x 140–940 */
+.sans { font-family: 'Manrope'; font-weight: 800; letter-spacing: -0.035em; line-height: .95;
+  text-shadow: 0 0 40px rgba(76,155,255,.35), 0 6px 30px rgba(0,0,0,.6) }
+.serif { font-family: 'Instrument Serif'; font-style: italic; font-weight: 400; letter-spacing: -0.01em; line-height: .9 }
+.chrome {
+  background-image: var(--gloss), var(--chrome);
+  background-size: 300% 100%, 100% 100%;
+  background-position: var(--sheen, 120%) 0, 0 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 22px rgba(76,155,255,.55)) drop-shadow(0 4px 2px rgba(0,10,40,.6));
+  padding: 0 .08em;
+}
+.kicker { font-family: 'Manrope'; font-weight: 700; font-size: 30px; letter-spacing: .32em; text-transform: uppercase; color: #9ED8FF;
+  text-shadow: 0 0 18px rgba(76,155,255,.8) }
+
+/* shirt cards */
+#cards { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; perspective: 1700px; perspective-origin: 540px 1000px }
+.card { position: absolute; left: 260px; top: 590px; width: 560px; height: 780px; border-radius: 46px; padding: 5px;
+  background: linear-gradient(150deg, #EAF8FF 0%, #9ED8FF 18%, #4C9BFF 40%, #2E6BFF 58%, #A8E0FF 80%, #EAF8FF 100%);
+  box-shadow: 0 0 60px rgba(76,155,255,.45), 0 40px 80px rgba(0,0,0,.7); transform-style: preserve-3d }
+.card .in { position: relative; width: 100%; height: 100%; border-radius: 41px; overflow: hidden; background: #05080f }
+.card .photo { position: absolute; left: 0; right: 0; top: 0; height: 600px; background: #ffffff }
+.card .photo::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, #9ED8FF, transparent) }
+.card svg.flatshirt { position: absolute; left: 20px; top: 50px; width: 520px; height: auto; transform-origin: 50% 50% }
+.card .meta { position: absolute; left: 0; right: 0; bottom: 34px; text-align: center }
+.card .nation { font-weight: 800; font-size: 54px; letter-spacing: -.02em }
+.card .type { display: inline-block; margin-top: 12px; padding: 9px 22px 10px; border-radius: 99px; font-weight: 800; font-size: 24px; letter-spacing: .24em;
+  color: #03060A; background: linear-gradient(180deg, #EAF8FF, #9ED8FF 55%, #4C9BFF) }
+.card .gloss { position: absolute; inset: 0; border-radius: 41px; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.0) 38%, rgba(220,240,255,.42) 46%, rgba(255,255,255,.08) 52%, transparent 60%);
+  background-size: 300% 100%; background-repeat: no-repeat }
+
+/* flag chips (scene 2) */
+.flag { position: absolute; left: 0; top: 0; width: 150px; height: 128px; margin: -64px 0 0 -75px; text-align: center }
+.flag .f { width: 132px; height: 88px; margin: 0 auto; border-radius: 14px; overflow: hidden; border: 3px solid #9ED8FF;
+  box-shadow: 0 0 24px rgba(76,155,255,.9), 0 0 2px #fff }
+.flag .f canvas { width: 100%; height: 100%; display: block }
+.flag .n { margin-top: 8px; font-weight: 800; font-size: 26px; letter-spacing: .14em; text-shadow: 0 0 12px rgba(76,155,255,.9) }
+
+/* feature chip */
+.pill { display: inline-flex; align-items: center; gap: 16px; padding: 22px 40px; border-radius: 99px; font-weight: 800; font-size: 54px; letter-spacing: .02em;
+  background: rgba(8,16,32,.72); border: 3px solid #9ED8FF; box-shadow: 0 0 40px rgba(76,155,255,.7), inset 0 0 30px rgba(76,155,255,.25) }
+
+/* game HUD */
+.hud { font-weight: 800; font-size: 36px; letter-spacing: .2em; color: #EAF8FF; text-shadow: 0 0 14px rgba(76,155,255,.9) }
+.hud .shield { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 22px; color: #9ED8FF }
+.hud .bar { width: 220px; height: 14px; border-radius: 99px; border: 2px solid rgba(158,216,255,.7); padding: 2px; box-shadow: 0 0 14px rgba(76,155,255,.6) }
+.hud .bar i { display: block; height: 100%; max-width: 100%; border-radius: 99px; background: linear-gradient(90deg, #2E6BFF, #9ED8FF, #EAF8FF); box-shadow: 0 0 10px #4C9BFF }
+.hud b { display: block; font-size: 68px; letter-spacing: .06em; margin-top: 4px }
+
+/* odometer */
+#odo { top: 700px; height: 300px; display: flex; justify-content: center; font-weight: 800; font-size: 440px; line-height: 300px; letter-spacing: -.04em }
+#odo .col { position: relative; height: 380px; margin: -40px -60px; width: calc(.6em + 120px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%) }
+#odo .col.dot { width: calc(.3em + 120px) }
+#odo .chrome { padding: 0 }
+#odo .strip { position: absolute; left: 60px; right: 60px; top: -20px; text-align: center }
+#odo .strip div { height: 420px; line-height: 420px }
+
+/* end card */
+#logo { top: 610px; font-size: 230px; line-height: 1 }
+#logo .k { font-family: 'Manrope'; font-weight: 800; letter-spacing: -.06em }
+#logo .u { font-family: 'Instrument Serif'; font-style: italic; font-size: 1.12em; letter-spacing: -.02em }
+.url { display: inline-block; padding: 20px 46px 22px; border-radius: 99px; font-weight: 800; font-size: 46px; letter-spacing: .02em;
+  background: rgba(10,22,44,.75); border: 3px solid #9ED8FF; box-shadow: 0 0 46px rgba(76,155,255,.75), inset 0 0 26px rgba(76,155,255,.3) }
+.tag { font-weight: 800; font-size: 68px; letter-spacing: -.02em; line-height: 1.05 }
+.tag .serif { font-size: 1.25em; font-weight: 400 }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" class="layer" width="1080" height="1920"></canvas>
+  <canvas id="gl" class="layer" width="1080" height="1920"></canvas>
+  <canvas id="fx" class="layer" width="1080" height="1920"></canvas>
+  <div id="flags"></div>
+  <div id="cards"></div>
+
+  <!-- 1 · hook -->
+  <div id="s1a" class="abs c sans" style="top:250px;font-size:132px">Every shirt…</div>
+  <div id="s1b" class="abs c serif" style="top:390px;font-size:176px"><span class="chrome">…has a homeland.</span></div>
+
+  <!-- 2 · spin -->
+  <div id="s2" class="abs c" style="top:220px"><div class="sans" style="font-size:118px">Spin the</div><div class="serif" style="font-size:190px;margin-top:-6px"><span class="chrome">globe.</span></div></div>
+
+  <div id="s2b" class="abs c" style="top:220px"><div class="sans" style="font-size:118px">Tap your</div><div class="serif" style="font-size:190px;margin-top:-6px"><span class="chrome">flag.</span></div></div>
+
+  <!-- 3 · shirts -->
+  <div id="s3" class="abs c" style="top:200px"><div class="sans" style="font-size:112px">Find your</div><div class="serif" style="font-size:156px;margin-top:-2px"><span class="chrome">nation’s shirt.</span></div></div>
+
+  <!-- 4 · features -->
+  <div id="f1" class="abs c" style="top:230px"><div class="sans" style="font-size:124px">Real day</div><div class="serif" style="font-size:180px"><span class="chrome">&amp; night</span></div></div>
+  <div id="f2" class="abs c" style="top:230px"><div class="sans" style="font-size:124px">A football</div><div class="serif" style="font-size:190px"><span class="chrome">moon</span></div></div>
+  <div id="f3" class="abs c" style="top:230px"><div class="sans" style="font-size:124px">Catch a</div><div class="serif" style="font-size:170px"><span class="chrome">shooting star</span></div></div>
+  <div id="f3chip" class="abs c" style="top:1300px"><span class="pill">✦ Discount unlocked</span></div>
+
+  <!-- 5 · game -->
+  <div id="hud" class="abs" style="left:70px;top:178px"><div class="hud">ASTEROID RUSH<b id="score">000000</b><div class="shield"><span>◆</span><div class="bar"><i id="shield"></i></div></div></div></div>
+  <div id="w1" class="abs c sans" style="top:300px;font-size:170px">Play.</div>
+  <div id="w2" class="abs c serif" style="top:470px;font-size:230px"><span class="chrome">Win.</span></div>
+  <div id="w3" class="abs c sans" style="top:690px;font-size:170px">Shop.</div>
+
+  <!-- 6 · launch -->
+  <div id="launching" class="abs c" style="top:550px;font-weight:800;font-size:76px;letter-spacing:.42em;text-indent:.42em;text-shadow:0 0 30px rgba(76,155,255,.9)">LAUNCHING</div>
+  <div id="odo" class="abs c"></div>
+  <div id="sub6" class="abs c serif" style="top:1035px;font-size:200px"><span class="chrome">October</span></div>
+  <div id="mon6" class="abs c" style="top:1262px;font-weight:800;font-size:54px;letter-spacing:.42em;text-indent:.42em;color:#cfeaff;text-shadow:0 0 22px rgba(76,155,255,.9)">TUESDAY</div>
+
+  <!-- 7 · end card -->
+  <div id="logo" class="abs c" style="top:520px"><span class="k">kits</span><span class="u chrome">4u</span></div>
+  <div id="url" class="abs c" style="top:805px"><span class="url" id="urltext">kits4u.store</span></div>
+  <div id="tag1" class="abs c tag" style="top:975px">Home, away &amp;<br><span class="serif chrome">retro shirts</span></div>
+  <div id="tag2" class="abs c tag" style="top:975px">from every<br><span class="serif chrome">corner of the world.</span></div>
+  <div id="follow" class="abs c tag" style="top:975px">Follow for<br><span class="serif chrome">launch day</span> 🚀</div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/flags.js"></script>
+<script src="../assets/js/jersey.js"></script>
+<script type="importmap">{ "imports": { "three": "./node_modules/three/build/three.module.js", "three/addons/": "./node_modules/three/examples/jsm/" } }</script>
+<script type="module" src="scene.js"></script>
+</body>
+</html>

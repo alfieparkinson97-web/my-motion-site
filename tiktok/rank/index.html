@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>kits4u Kit Tier List</title>
+<style>
+@font-face { font-family: 'Manrope'; font-weight: 800; src: url(../node_modules/@fontsource/manrope/files/manrope-latin-800-normal.woff2) format('woff2'); }
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0b0b0f }
+body { font-family: 'Manrope', 'Noto Color Emoji', sans-serif; font-weight: 800; color: #fff; -webkit-font-smoothing: antialiased }
+#stage { position: absolute; inset: 0; overflow: hidden }
+canvas { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px }
+.abs { position: absolute; left: 0; width: 1080px; text-align: center; will-change: transform, opacity; padding: 0 140px 0 60px }
+/* TikTok-caption style: white with a thick black outline */
+.cap { color: #fff; letter-spacing: -.02em; line-height: 1.02; -webkit-text-stroke: 16px #000; paint-order: stroke fill; text-shadow: 0 8px 0 rgba(0,0,0,.35) }
+.yel { color: #ffe14d }
+.pill { display: inline-block; padding: 18px 44px; border-radius: 99px; background: #ffe14d; color: #000; font-size: 52px; box-shadow: 0 10px 0 #000 }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c" width="1080" height="1920"></canvas>
+  <div id="hook1" class="abs cap" style="top:800px;font-size:112px">I RANKED THE <span class="yel">6 CRAZIEST</span> KITS 💀</div>
+  <div id="hook2" class="abs cap" style="top:1290px;font-size:64px">#1 is actually insane 😳</div>
+  <div id="take" class="abs cap" style="top:790px;font-size:60px"></div>
+  <div id="end1" class="abs cap" style="top:860px;font-size:120px">ALL <span class="yel">S TIER</span> 😤</div>
+  <div id="end2" class="abs cap" style="top:1010px;font-size:70px">Change my mind 👇</div>
+  <div id="end3" class="abs cap" style="top:860px;font-size:104px">DROPPING<br><span class="yel">27 OCT</span> 🔥</div>
+  <div id="end4" class="abs" style="top:1120px"><span class="pill" id="url">kits4u.store</span></div>
+  <div id="end5" class="abs cap" style="top:1250px;font-size:56px">Follow for part 2 👀</div>
+</div>
+<script type="module" src="rank.js"></script>
+</body>
+</html>
