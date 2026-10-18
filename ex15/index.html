@@ -366,7 +366,7 @@ box(6,6,0.3,MAT.shutter,31,3,2.15,facility); // garage door at the vehicle exit
 
 // ---------- facility lights
 const hemi=new THREE.HemisphereLight(0x8890a0,0x201510,0.35);scene.add(hemi);
-const flash=new THREE.SpotLight(0xfff0d8,2.1,30,0.5,0.45,1.3);flash.position.set(0.25,-0.15,0.1);camera.add(flash);
+const flash=new THREE.SpotLight(0xfff0d8,3,42,0.62,0.4,1.1);flash.position.set(0.25,-0.15,0.1);camera.add(flash);
 const flashTarget=new THREE.Object3D();flashTarget.position.set(0,-0.1,-5);camera.add(flashTarget);flash.target=flashTarget;
 const roomLights=[V3(31,5.4,46),V3(31,5.4,53),V3(31,5.4,37),V3(12,5.3,12),V3(50,5.3,12),V3(31,5.3,24),V3(75,5.3,7),V3(75,5.3,23),V3(15,5.0,35),V3(48,5.0,35)].map(p=>{const l=new THREE.PointLight(0xffe2b8,1,22,1.6);l.position.copy(p);scene.add(l);return l;});
 const moon=new THREE.DirectionalLight(0x8fa6d8,0);moon.position.set(200,300,100);scene.add(moon);scene.add(moon.target);
@@ -729,7 +729,7 @@ function updateHeld(dt){const h=held();vm.visible=h==='axe';vmOther.visible=true
   // the torch only works while held, switched on and charged
   const on=h==='torch'&&INV.torchOn&&INV.battery>0;
   if(on){INV.battery=Math.max(0,INV.battery-dt*0.65);if(INV.battery<=0)say('The torch battery is dead. Find a battery.',3);}
-  flash.visible=on;flash.intensity=on?(INV.battery<15?(Math.random()<0.15?0.2:1.6):2.1):0;
+  flash.visible=on;flash.intensity=on?(INV.battery<15?(Math.random()<0.15?0.3:2.2):3):0;
   G.batT=(G.batT||0)-dt;if(G.batT<=0){G.batT=0.5;renderHotbar();}}
 function useHeld(){const h=held();if(h==='axe')swing();else if(h==='battery'){if(INV.battery>=99){say('The torch is already fully charged.',2);return;}INV.battery=Math.min(100,INV.battery+60);invRemove('battery',1);SFX.pickup();say('Battery loaded into the torch.',2);}}
 
@@ -755,17 +755,17 @@ function resetCommon(){
   document.body.classList.remove('cine');$('death').hidden=true;ui.look.hidden=true;ui.vig.style.opacity=0;$('bottomLeft').hidden=false;vm.visible=false;vmOther.visible=false;$('cross').hidden=false;G.shake=0;G.swingT=-1;G.stunT=0;G.axeCd=0;G.repair=0;flashV=0;
   ui.items.hidden=true;ui.driveHud.hidden=true;ui.prompt.hidden=true;ui.progress.hidden=true;ui.sub.classList.remove('on');ui.notice.classList.remove('on');
   canvas.style.filter='';driveTruck.g.visible=false;driveTruck.lights.forEach(l=>l.intensity=0);
-  scene.background.copy(VOID);scene.fog=new THREE.FogExp2(0x020102,0.05);moon.intensity=0;hemi.intensity=0.06;hemi.color.setHex(0x8890a0);
+  scene.background.copy(VOID);scene.fog=new THREE.FogExp2(0x050304,0.03);moon.intensity=0;hemi.intensity=0.24;hemi.color.setHex(0x8890a0);
   flash.visible=false;ex.root.visible=true;$('hotbar').hidden=false;$('eyeState').hidden=true;EXS.aware=false;EXS.searchT=0;EXS.wp=null;ex.root.position.y=0;ex.claw=0;ex.root.rotation.set(0,0,0);
   slide.forEach(s=>{s.m.visible=false;s.landed=false;});engineOn(false);
   items.forEach(it=>{it.taken=false;it.mesh.visible=true;it.glow.visible=true;});
   PL.vx=PL.vz=0;PL.stamina=100;PL.exhausted=false;G.burstT=0;G.burstCd=2;G.unseenT=0;ex.jawBoost=0;growlSet(0);ui.stat.style.opacity=0;
 }
 // dim red emergency strobes once the power is cut
-function emergencyLights(){roomLights.forEach((l,i)=>l.intensity=0.12+0.22*Math.max(0,Math.sin(G.t*2.2+i*1.3)));}
+function emergencyLights(){roomLights.forEach((l,i)=>l.intensity=0.55+0.3*Math.max(0,Math.sin(G.t*2.2+i*1.3)));}
 function setLights(mode){
-  roomLights.forEach((l,i)=>{if(mode==='normal'){l.distance=22;l.decay=1.6;l.color.setHex(0xffe2b8);l.intensity=i<3?1.1:0.06;}else{l.distance=12;l.decay=1.8;l.color.setHex(0xff2010);l.intensity=0.25;}});
-  hemi.intensity=mode==='normal'?0.2:0.05;
+  roomLights.forEach((l,i)=>{if(mode==='normal'){l.distance=22;l.decay=1.6;l.color.setHex(0xffe2b8);l.intensity=i<3?1.1:0.06;}else{l.distance=22;l.decay=1.4;l.color.setHex(0xff4a28);l.intensity=0.6;}});
+  hemi.intensity=mode==='normal'?0.35:0.24;
   fixtures.forEach(f=>f.material.color.setHex(mode==='normal'?0xffe6c0:0xff3020));
   pod.ringMat.color.setHex(mode==='normal'?0x3fd0ff:0xff2a18);
 }
