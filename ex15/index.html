@@ -40,15 +40,27 @@ body.nohud #hud{opacity:0}
 .meter i{display:block;height:100%;width:100%;background:var(--ink);transition:background .2s}
 .meter.low i{background:var(--red)}
 #axeState{font-family:var(--display);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
-#prompt{position:fixed;left:50%;bottom:22%;transform:translateX(-50%);font-family:var(--display);font-size:18px;background:var(--panel);padding:8px 16px;border:1px solid var(--line);white-space:nowrap}
+#prompt{position:fixed;left:50%;bottom:26%;transform:translateX(-50%);font-family:var(--display);font-size:18px;background:var(--panel);padding:8px 16px;border:1px solid var(--line);white-space:nowrap}
 #prompt b{color:var(--haz)}
-#progress{position:fixed;left:50%;bottom:calc(22% - 18px);transform:translateX(-50%);width:240px;height:6px;background:rgba(255,255,255,.15)}
+#progress{position:fixed;left:50%;bottom:calc(26% - 18px);transform:translateX(-50%);width:240px;height:6px;background:rgba(255,255,255,.15)}
 #progress i{display:block;height:100%;width:0;background:var(--haz)}
 #sub{position:fixed;left:50%;bottom:calc(13vh + 20px);transform:translateX(-50%);max-width:min(760px,90vw);text-align:center;font-family:var(--display);font-size:clamp(16px,2.4vw,24px);text-shadow:0 2px 8px #000;opacity:0;transition:opacity .35s}
 #sub.on{opacity:1}
 #sub em{font-style:normal;color:var(--red)}
 #notice{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;font-family:var(--display);font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:clamp(22px,4.5vw,54px);color:var(--red);text-shadow:0 0 24px rgba(255,40,20,.6);opacity:0;transition:opacity .3s;width:90vw}
 #notice.on{opacity:1}
+#hotbar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:6px}
+.slot{width:66px;height:58px;background:var(--panel);border:1px solid rgba(239,231,220,.18);display:grid;place-items:center;position:relative;font-family:var(--display);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.slot.sel{border-color:var(--haz);box-shadow:0 0 0 1px var(--haz) inset}
+.slot .k{position:absolute;left:5px;top:3px;font-size:10px;color:var(--dim)}
+.slot .n{position:absolute;right:5px;bottom:3px;font-family:var(--mono);font-size:11px;color:var(--haz)}
+.slot .bat{position:absolute;left:6px;right:6px;bottom:4px;height:3px;background:rgba(255,255,255,.15)}
+.slot .bat i{display:block;height:100%;background:var(--haz)}
+#eyeState{top:calc(110px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));font-family:var(--display);font-size:13px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px}
+#eyeState.seen{color:var(--red);border-left-color:var(--red)}
+#eyeState.search{color:var(--haz)}
+#eyeState.hidden{color:var(--dim);border-left-color:var(--dim)}
+@media (max-width:640px){.slot{width:48px;height:44px;font-size:9px}#bottomLeft{bottom:84px}}
 #cross{position:fixed;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;background:rgba(255,255,255,.7);border-radius:50%}
 #driveHud{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(420px,80vw);text-align:center}
 #driveHud .meter{height:8px;margin-top:6px}
@@ -88,6 +100,8 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
     <div id="axeState" hidden></div>
   </div>
   <div id="cross"></div>
+  <div id="hotbar"></div>
+  <div id="eyeState" class="panel"></div>
   <div id="prompt" hidden></div>
   <div id="progress" hidden><i></i></div>
   <div id="driveHud" hidden><div class="tag">EX-15 distance</div><div class="meter"><i id="gapBar"></i></div></div>
@@ -103,13 +117,15 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
   <div class="card">
     <div class="stripe"></div>
     <h1>EX<span>-</span>15</h1>
-    <p>Lab 7, sublevel B. Night shift. The deployment pod in the corner was supposed to stay powered down. Get to the factory floor, find the parts to fix the old truck and drive out through the caves before EX-15 reaches you.</p>
+    <p>Lab 7, sublevel B. Night shift. The deployment pod in the corner was supposed to stay powered down. When the power dies, grab a torch, search the facility for the parts to fix the old drill truck and drill out through the caves. EX-15 only sees what's in front of it. Stay behind it and it won't know you're there.</p>
     <div class="keys">
       <kbd>W A S D</kbd><span>Move</span>
       <kbd>Mouse</kbd><span>Look (click the game to lock the mouse)</span>
       <kbd>Shift</kbd><span>Sprint (uses stamina)</span>
       <kbd>E</kbd><span>Pick up / hold to repair</span>
-      <kbd>Left click</kbd><span>Swing the axe to stun EX-15</span>
+      <kbd>1-6 / wheel</kbd><span>Choose a toolbar slot</span>
+      <kbd>F</kbd><span>Torch on or off</span>
+      <kbd>Left click</kbd><span>Use what you're holding (swing the axe, load a battery)</span>
       <kbd>A / D</kbd><span>Steer the truck (it drives itself forward)</span>
       <kbd>Space</kbd><span>Look back while driving</span>
     </div>
@@ -250,40 +266,40 @@ const glowSprite=(color,scale,parent,x=0,y=0,z=0)=>{const s=new THREE.Sprite(new
 
 // ---------- facility map (each cell = 2m). Row 0 is north (-z).
 const MAP=[
-'##############GGG##############',
-'#.............................#',
-'#....MM........T........MM....#',
-'#....MM........T........MM..g.#',
-'#.g............T..............#',
-'#.......................MMMM..#',
-'#..MMMM.....MM................#',
-'#...........MM.......f........#',
-'#.....s.............MM...MM...#',
-'#..MM...MM..........MM...MM...#',
-'#..MM...MM.....g..............#',
-'#.............................#',
-'#....MMMM...........MMMM......#',
-'#...................a.........#',
-'#.............................#',
-'##############SSS##############',
-'##############...##############',
-'##############222##############',
-'##############...##############',
-'##############...##############',
-'##############111##############',
-'#########.............#########',
-'#########kk.......kk..#########',
-'#########.............#########',
-'#########X............#########',
-'#########.............#########',
-'#########......P......#########',
-'#########kk.........kk#########',
-'###############################',
+'##############GGG############################',
+'#.............................#..kk.....MM..#',
+'#....MM........T........MM....#..kk.........#',
+'#....MM........T........MM..g...........b...#',
+'#..............T..............#.....kk......#',
+'#.......................MMMM..#.MM..kk......#',
+'#..MMMM.....MM................#.............#',
+'#...........MM................#######.#######',
+'#.....b.............MM...MM...#.............#',
+'#..MM...MM..........MM...MM...#..MMM...MMM..#',
+'#..MM...MM....................#..MMM...MMM.g#',
+'#...........................................#',
+'#....MMMM...........MMMM......#..MMM...MMM..#',
+'#...................a.........#......f......#',
+'#.............................#.............#',
+'######.#######SSS#######.####################',
+'##...........#...##..........################',
+'##.M.M.M.M.M.#222##.MM....MM.################',
+'##....s......#...##..g.......################',
+'##.M.M.M.M.M.#...##.MM..b.MM.################',
+'##############111############################',
+'#########.............#######################',
+'#########kk.......kk..#######################',
+'#########.............#######################',
+'#########X............#######################',
+'#########.......t.....#######################',
+'#########......P......#######################',
+'#########kk.........kk#######################',
+'#############################################',
 ];
 const CELL=2, WALL_H=6, ROWS=MAP.length, COLS=MAP[0].length;
 const cc=c=>c*CELL+CELL/2;
-const markers={g:[]};
-for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const ch=MAP[r][c];if(ch==='g')markers.g.push([cc(c),cc(r)]);else if('fsaPX'.includes(ch))markers[ch]=[cc(c),cc(r)];}
+const markers={g:[],b:[]};
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const ch=MAP[r][c];if(ch==='g'||ch==='b')markers[ch].push([cc(c),cc(r)]);else if('fsatPX'.includes(ch))markers[ch]=[cc(c),cc(r)];}
 
 const facility=new THREE.Group();scene.add(facility);
 // floor + ceiling
@@ -296,6 +312,7 @@ const facility=new THREE.Group();scene.add(facility);
  cells.forEach(([c,r],i)=>{m4.makeTranslation(cc(c),WALL_H/2,cc(r));im.setMatrixAt(i,m4);});facility.add(im);}
 // crates, machines, desks
 for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const ch=MAP[r][c];const x=cc(c),z=cc(r);
+  if(ch==='M'&&r>=16){box(1.7,2.4,1.2,L({color:0x3b4650}),x,1.2,z,facility);box(0.06,2.2,0.02,MAT.black,x,1.2,z-0.61,facility);continue;}
   if(ch==='M'){const kind=(r*7+c*3)%4;
     if(kind===0){box(1.9,rand(1.6,2.6),1.9,MAT.wood,x,0,z,facility).geometry.translate(0,0,0);}
     if(kind===1){const b=box(1.95,2.8,1.95,MAT.dark,x,1.4,z,facility);box(1.96,0.35,1.96,MAT.haz,x,2.3,z,facility);glowSprite(0xff5522,0.4,facility,x+0.99,2.0,z);}
@@ -314,12 +331,14 @@ addSign(['UNIT EX-15','DEPLOYMENT BAY'],18.02,4.3,49,Math.PI/2,3,1);
 addSign(['SECTOR B → FACTORY'],31,5.3,41.25,0,3.6,0.6);
 addSign(['ASSEMBLY FLOOR'],31,5.3,31.35,0,3.4,0.6);
 addSign(['VEHICLE EXIT'],31,5.4,2.33,0,3,0.6);
+addSign(['OFFICE'],61.95,4.6,7,-Math.PI/2,2.4,0.6);addSign(['GENERATORS'],61.95,4.6,23,-Math.PI/2,2.4,0.6);
+addSign(['LOCKERS'],13,4.4,30.05,Math.PI,2.4,0.6);addSign(['STORAGE'],49,4.4,30.05,Math.PI,2.4,0.6);
 
 // lab lights fixtures
 const fixtures=[];
 function lampFixture(x,z,mat){const g=new THREE.Group();box(2.4,0.12,0.4,MAT.dark,0,0,0,g);const tube=box(2.2,0.06,0.2,mat,0,-0.08,0,g);g.position.set(x,WALL_H-0.1,z);facility.add(g);fixtures.push(tube);return tube;}
 lampFixture(31,46,MAT.lampWarm.clone());lampFixture(31,53,MAT.lampWarm.clone());lampFixture(31,37,MAT.lampWarm.clone());
-lampFixture(12,12,MAT.lampWarm.clone());lampFixture(50,12,MAT.lampWarm.clone());lampFixture(31,24,MAT.lampWarm.clone());
+lampFixture(12,12,MAT.lampWarm.clone());lampFixture(50,12,MAT.lampWarm.clone());lampFixture(31,24,MAT.lampWarm.clone());lampFixture(75,7,MAT.lampWarm.clone());lampFixture(75,23,MAT.lampWarm.clone());lampFixture(15,35,MAT.lampWarm.clone());lampFixture(48,35,MAT.lampWarm.clone());
 
 // ceiling pipes and cable runs
 {const pm=L({color:0x5a5450,shininess:60,specular:0x444444}),rm=L({map:rustTex});
@@ -347,44 +366,57 @@ box(6,6,0.3,MAT.shutter,31,3,2.15,facility); // garage door at the vehicle exit
 
 // ---------- facility lights
 const hemi=new THREE.HemisphereLight(0x8890a0,0x201510,0.35);scene.add(hemi);
-const flash=new THREE.SpotLight(0xfff0d8,1.5,24,0.55,0.55,1.4);flash.position.set(0.25,-0.15,0.1);camera.add(flash);
+const flash=new THREE.SpotLight(0xfff0d8,2.1,30,0.5,0.45,1.3);flash.position.set(0.25,-0.15,0.1);camera.add(flash);
 const flashTarget=new THREE.Object3D();flashTarget.position.set(0,-0.1,-5);camera.add(flashTarget);flash.target=flashTarget;
-const roomLights=[V3(31,5.4,46),V3(31,5.4,53),V3(31,5.4,37),V3(12,5.3,12),V3(50,5.3,12),V3(31,5.3,24)].map(p=>{const l=new THREE.PointLight(0xffe2b8,1,22,1.6);l.position.copy(p);scene.add(l);return l;});
+const roomLights=[V3(31,5.4,46),V3(31,5.4,53),V3(31,5.4,37),V3(12,5.3,12),V3(50,5.3,12),V3(31,5.3,24),V3(75,5.3,7),V3(75,5.3,23),V3(15,5.0,35),V3(48,5.0,35)].map(p=>{const l=new THREE.PointLight(0xffe2b8,1,22,1.6);l.position.copy(p);scene.add(l);return l;});
 const moon=new THREE.DirectionalLight(0x8fa6d8,0);moon.position.set(200,300,100);scene.add(moon);scene.add(moon.target);
 
 // ---------- items
 function buildGear(){const g=new THREE.Group();const m=L({color:0xb59a52});const d=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,0.1,16),m);d.rotation.x=Math.PI/2;g.add(d);for(let i=0;i<10;i++){const t=box(0.1,0.12,0.1,m);const a=i/10*Math.PI*2;t.position.set(Math.cos(a)*0.32,Math.sin(a)*0.32,0);t.rotation.z=a;g.add(t);}const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.14,8),MAT.black);hub.rotation.x=Math.PI/2;g.add(hub);return g;}
 function buildFuel(){const g=new THREE.Group();const m=L({color:0xb3261c});box(0.42,0.55,0.2,m,0,0,0,g);box(0.24,0.06,0.06,MAT.black,0,0.31,0,g);const sp=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.05,0.14,8),MAT.steel);sp.position.set(0.15,0.33,0);sp.rotation.z=-0.5;g.add(sp);return g;}
 function buildScrap(){const g=new THREE.Group();[[0,0,0,0.5,0.04,0.35,.3],[0.1,0.06,0.05,0.4,0.04,0.25,-.6],[-0.08,0.1,-0.04,0.3,0.04,0.3,1.1]].forEach(([x,y,z,w,h,d,r])=>{const p=box(w,h,d,MAT.steel,x,y,z,g);p.rotation.set(r*0.4,r,r*0.2);});box(0.06,0.06,0.6,MAT.rust,0,0.08,0,g).rotation.y=0.7;return g;}
+function buildTorch(){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.04,0.32,14),L({color:0x2b2b2e,shininess:60}));b.rotation.x=Math.PI/2;g.add(b);const hd=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.05,0.1,16),L({color:0xd8a720}));hd.rotation.x=Math.PI/2;hd.position.z=-0.2;g.add(hd);const lens=new THREE.Mesh(new THREE.CircleGeometry(0.062,16),new THREE.MeshBasicMaterial({color:0xfff2c8}));lens.position.z=-0.252;lens.rotation.y=Math.PI;g.add(lens);return g;}
+function buildBattery(){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.2,14),L({color:0x2a7a3a,shininess:60}));g.add(b);const t=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.05,14),L({color:0xcfcfcf,shininess:90}));t.position.y=0.11;g.add(t);return g;}
 function buildAxe(){const g=new THREE.Group();const h=new THREE.Mesh(new THREE.CylinderGeometry(0.026,0.032,0.85,12),L({color:0x6a3f1f}));g.add(h);const steelA=L({color:0x9aa0a6,shininess:90,specular:0x777777});const hd=new THREE.Mesh(rboxGeo(0.045,0.16,0.26,0.015,1,0,4),steelA);hd.position.set(0,0.36,-0.1);g.add(hd);const edge=new THREE.Mesh(rboxGeo(0.02,0.26,0.06,0.01,1,0,3),L({color:0xd0d4d8,shininess:120,specular:0xaaaaaa}));edge.position.set(0,0.36,-0.25);g.add(edge);box(0.05,0.2,0.05,L({color:0xc8202a}),0,0.36,0.05,g);return g;}
 const items=[];
-function addItem(type,label,mesh,x,z){const y=type==='gear'?0.45:0.4;mesh.position.set(x,y,z);facility.add(mesh);const gl=glowSprite(type==='axe'?0xffaa66:0xffd36b,1.1,facility,x,y,z);items.push({type,label,mesh,glow:gl,x,z,y,taken:false});}
+function addItem(type,label,mesh,x,z){const y=type==='gear'?0.45:0.4;mesh.position.set(x,y,z);facility.add(mesh);const gl=glowSprite(type==='axe'||type==='torch'?0xffaa66:0xffd36b,0.8*1.1,facility,x,y,z);items.push({type,label,mesh,glow:gl,x,z,y,taken:false});}
 markers.g.forEach(([x,z])=>addItem('gear','Gear',buildGear(),x,z));
 addItem('fuel','Fuel canister',buildFuel(),...markers.f);
 addItem('scrap','Scrap metal',buildScrap(),...markers.s);
 addItem('axe','Fire axe',buildAxe(),...markers.a);
+addItem('torch','Torch',buildTorch(),...markers.t);
+markers.b.forEach(([x,z])=>addItem('battery','Battery',buildBattery(),x,z));
 
 // ---------- truck
 function buildTruck(withLights){
-  const g=new THREE.Group();const paint=L({map:tex(128,128,(c,w,h)=>{c.fillStyle='#43523e';c.fillRect(0,0,w,h);grimeBlobs(c,w,h,20,'rgba(110,60,25,.35)');speckle(c,w,h,1500,['rgba(0,0,0,.25)','rgba(255,255,255,.05)']);})});
-  box(2.1,0.45,5.4,MAT.dark,0,0.75,0,g);
-  const hood=new THREE.Group();hood.position.set(0,1.5,-1.25);g.add(hood);box(2.1,0.08,1.5,paint,0,0,-0.75,hood);
-  box(2.1,0.55,1.5,paint,0,1.2,-2.0,g);
-  box(2.1,1.3,1.7,paint,0,1.6,-0.4,g);
-  const glass=L({color:0x0b1418});box(1.9,0.55,0.05,glass,0,2.0,-1.26,g);box(0.05,0.5,1.2,glass,-1.06,2.0,-0.4,g);box(0.05,0.5,1.2,glass,1.06,2.0,-0.4,g);
-  box(2.1,0.6,2.6,paint,0,1.25,1.4,g);box(1.8,0.5,2.4,MAT.black,0,1.38,1.4,g);
-  box(2.2,0.25,0.2,MAT.steel,0,0.85,-2.78,g);box(2.2,0.25,0.2,MAT.steel,0,0.85,2.74,g);
-  box(0.12,0.25,0.18,MAT.black,-1.15,2.05,-0.95,g);// mirror
-  const hl=new THREE.MeshBasicMaterial({color:withLights?0xfff3cf:0x2a2a22});box(0.45,0.22,0.05,hl,-0.7,1.25,-2.77,g);box(0.45,0.22,0.05,hl,0.7,1.25,-2.77,g);
-  box(0.4,0.18,0.05,new THREE.MeshBasicMaterial({color:0x8a0e0a}),-0.75,1.25,2.82,g);box(0.4,0.18,0.05,new THREE.MeshBasicMaterial({color:0x8a0e0a}),0.75,1.25,2.82,g);
-  const wheels=[];const wg=new THREE.CylinderGeometry(0.46,0.46,0.34,24);wg.rotateZ(Math.PI/2);const hg=new THREE.CylinderGeometry(0.24,0.26,0.36,16);hg.rotateZ(Math.PI/2);
-  [[-1.07,-1.8],[1.07,-1.8],[-1.07,1.8],[1.07,1.8]].forEach(([x,z])=>{const w=new THREE.Mesh(wg,MAT.black);w.position.set(x,0.46,z);g.add(w);wheels.push(w);const hub=new THREE.Mesh(hg,MAT.steel);hub.position.set(x*1.01,0.46,z);g.add(hub);const arch=new THREE.Mesh(new THREE.TorusGeometry(0.56,0.07,8,20,Math.PI),MAT.dark);arch.rotation.y=Math.PI/2;arch.position.set(x*0.98,0.5,z);g.add(arch);});
+  // a mining drill truck: six wheels, yellow cab, engine block and a spiralled drill bit at the front
+  const g=new THREE.Group();
+  const paint=L({map:tex(128,128,(c,w,h)=>{c.fillStyle='#b88a1a';c.fillRect(0,0,w,h);grimeBlobs(c,w,h,26,'rgba(70,40,10,.35)');speckle(c,w,h,1200,['rgba(0,0,0,.25)','rgba(255,255,255,.05)']);}),shininess:30});
+  const glass=L({color:0x0b1418,shininess:120,specular:0x557788});
+  box(2.3,0.5,5.4,MAT.dark,0,0.85,0.3,g);
+  box(2.2,1.1,1.8,paint,0,1.65,1.9,g);box(1.6,0.3,1.2,MAT.dark,0,2.3,1.9,g);
+  const ex1=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,1.4,10),MAT.dark);ex1.position.set(0.85,2.7,2.5);g.add(ex1);
+  box(1.9,1.4,1.6,paint,0,1.8,0.0,g);box(1.75,0.6,0.05,glass,0,2.15,-0.81,g);box(0.05,0.55,1.2,glass,-0.96,2.15,0,g);box(0.05,0.55,1.2,glass,0.96,2.15,0,g);
+  box(0.1,0.22,0.16,MAT.black,-1.05,2.3,-0.6,g);// mirror
+  box(2.2,0.7,1.4,paint,0,1.35,-1.45,g);
+  const hood=new THREE.Group();hood.position.set(0,1.72,-0.8);g.add(hood);box(2.0,0.08,1.3,paint,0,0,-0.65,hood);
+  box(0.3,0.5,1.4,MAT.haz,-1.05,1.35,-1.45,g);box(0.3,0.5,1.4,MAT.haz,1.05,1.35,-1.45,g);
+  const mount=new THREE.Mesh(new THREE.CylinderGeometry(0.62,0.75,0.5,20),MAT.dark);mount.rotation.x=Math.PI/2;mount.position.set(0,1.3,-2.3);g.add(mount);
+  const drill=new THREE.Group();drill.position.set(0,1.3,-2.5);g.add(drill);
+  const bitMat=L({color:0x8d8a86,shininess:110,specular:0x999999});
+  const cg=new THREE.ConeGeometry(0.66,2.0,24);cg.rotateX(-Math.PI/2);cg.translate(0,0,-1.0);drill.add(new THREE.Mesh(cg,bitMat));
+  const hel=[];for(let k=0;k<=40;k++){const t=k/40,r=0.68*(1-t)+0.03,a=t*Math.PI*7;hel.push(V3(Math.cos(a)*r,Math.sin(a)*r,-t*1.95));}
+  drill.add(new THREE.Mesh(taperTube(hel,0.07,0.012,80,6),MAT.haz));
+  const wheels=[];const wg=new THREE.CylinderGeometry(0.52,0.52,0.4,24);wg.rotateZ(Math.PI/2);const hg=new THREE.CylinderGeometry(0.26,0.28,0.42,16);hg.rotateZ(Math.PI/2);
+  [[-1.25,-1.5],[1.25,-1.5],[-1.25,0.55],[1.25,0.55],[-1.25,2.2],[1.25,2.2]].forEach(([x,z])=>{const w=new THREE.Mesh(wg,MAT.black);w.position.set(x,0.52,z);g.add(w);wheels.push(w);const hub=new THREE.Mesh(hg,MAT.steel);hub.position.set(x*1.01,0.52,z);g.add(hub);});
+  box(0.4,0.2,0.05,new THREE.MeshBasicMaterial({color:0x8a0e0a}),-0.8,1.4,2.81,g);box(0.4,0.2,0.05,new THREE.MeshBasicMaterial({color:0x8a0e0a}),0.8,1.4,2.81,g);
+  const hl=new THREE.MeshBasicMaterial({color:withLights?0xfff3cf:0x2a2a22});box(0.3,0.16,0.08,hl,-0.6,2.55,-0.7,g);box(0.3,0.16,0.08,hl,0.6,2.55,-0.7,g);box(1.6,0.1,0.1,MAT.dark,0,2.55,-0.62,g);
   let lights=null;
-  if(withLights){lights=[-0.7,0.7].map(x=>{const s=new THREE.SpotLight(0xfff1cc,0,60,0.45,0.5,1.2);s.position.set(x,1.3,-2.8);const t=new THREE.Object3D();t.position.set(x*0.6,0.2,-14);g.add(s);g.add(t);s.target=t;return s;});
-    glowSprite(0xfff1cc,1.2,g,-0.7,1.25,-2.85);glowSprite(0xfff1cc,1.2,g,0.7,1.25,-2.85);}
-  return {g,hood,wheels,lights};
+  if(withLights){lights=[-0.6,0.6].map(x=>{const s=new THREE.SpotLight(0xfff1cc,0,60,0.45,0.5,1.2);s.position.set(x,2.55,-0.8);const t=new THREE.Object3D();t.position.set(x*0.6,0.2,-16);g.add(s);g.add(t);s.target=t;return s;});
+    glowSprite(0xfff1cc,1.1,g,-0.6,2.55,-0.78);glowSprite(0xfff1cc,1.1,g,0.6,2.55,-0.78);}
+  return {g,hood,wheels,lights,drill};
 }
-const factoryTruck=buildTruck(false);factoryTruck.g.position.set(31,0,7);factoryTruck.hood.rotation.x=-1.1;facility.add(factoryTruck.g);
+const factoryTruck=buildTruck(false);factoryTruck.g.position.set(31,0,7);factoryTruck.hood.rotation.x=1.0;factoryTruck.drill.rotation.x=0.12;facility.add(factoryTruck.g);
 factoryTruck.wheels[1].position.y=0.3;factoryTruck.wheels[1].rotation.x=0.4;factoryTruck.g.rotation.z=0.03;
 const truckCenter={x:31,z:7};
 
@@ -654,17 +686,30 @@ function showScreen(id){['menu','death','end'].forEach(s=>$(s).hidden=s!==id);}
 
 // ---------- input
 const keys={};let mouseDown=false;let yaw=0,pitch=0;
-addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&G.phase!=='menu')e.preventDefault();if(e.code==='KeyE')interact();if(e.code==='KeyF')flash.visible=!flash.visible;});
+addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&G.phase!=='menu')e.preventDefault();if(e.code==='KeyE')interact();if(e.code==='KeyF'){INV.torchOn=!INV.torchOn;if(held()==='torch')noise({dur:0.04,vol:0.12,freq:2500,type:'bandpass',q:3});}});
 addEventListener('keyup',e=>{keys[e.code]=false;});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;mouseDown=false;});
 const locked=()=>document.pointerLockElement===canvas;
 function tryLock(){if(locked())return;try{const p=canvas.requestPointerLock();if(p&&p.catch)p.catch(()=>{});}catch(e){}}
-canvas.addEventListener('mousedown',e=>{mouseDown=true;audioInit();if(onFoot())tryLock();if(e.button===0&&onFoot())swing();});
+canvas.addEventListener('mousedown',e=>{mouseDown=true;audioInit();if(onFoot())tryLock();if(e.button===0&&onFoot())useHeld();});
 addEventListener('mouseup',()=>mouseDown=false);
 addEventListener('mousemove',e=>{if(!onFoot()||G.phase==='dead')return;if(!locked()&&!mouseDown)return;yaw-=e.movementX*0.0022;pitch=clamp(pitch-e.movementY*0.0022,-1.45,1.45);});
 // basic touch look for tablets
 let touch=null;canvas.addEventListener('touchstart',e=>{touch=e.touches[0];audioInit();},{passive:true});
 canvas.addEventListener('touchmove',e=>{const t=e.touches[0];if(touch&&onFoot()){yaw-=(t.clientX-touch.clientX)*0.005;pitch=clamp(pitch-(t.clientY-touch.clientY)*0.005,-1.45,1.45);}touch=t;},{passive:true});
+
+// ---------- toolbar / inventory
+const ITEM_DEFS={torch:{label:'Torch',stack:1},axe:{label:'Axe',stack:1},gear:{label:'Gear',stack:3},fuel:{label:'Fuel',stack:1},scrap:{label:'Scrap',stack:1},battery:{label:'Battery',stack:4}};
+const INV={slots:[null,null,null,null,null,null],sel:0,battery:100,torchOn:true};
+const held=()=>{const sl=INV.slots[INV.sel];return sl?sl.type:null;};
+const invCount=t=>INV.slots.reduce((a,sl)=>a+(sl&&sl.type===t?sl.count:0),0);
+function invAdd(t){const d=ITEM_DEFS[t];let sl=INV.slots.find(x=>x&&x.type===t&&x.count<d.stack);if(sl){sl.count++;}else{const i=INV.slots.indexOf(null);if(i<0)return false;INV.slots[i]={type:t,count:1};if(!held())INV.sel=i;}renderHotbar();return true;}
+function invRemove(t,n){for(let i=0;i<INV.slots.length&&n>0;i++){const sl=INV.slots[i];if(sl&&sl.type===t){const k=Math.min(n,sl.count);sl.count-=k;n-=k;if(!sl.count)INV.slots[i]=null;}}renderHotbar();}
+function invReset(list){INV.slots=[null,null,null,null,null,null];list.forEach(t=>invAdd(t));INV.sel=0;INV.battery=100;INV.torchOn=true;renderHotbar();}
+function renderHotbar(){const hb=document.getElementById('hotbar');if(!hb)return;hb.innerHTML=INV.slots.map((sl,i)=>`<div class="slot${i===INV.sel?' sel':''}"><span class="k">${i+1}</span>${sl?ITEM_DEFS[sl.type].label:''}${sl&&sl.count>1?`<span class="n">x${sl.count}</span>`:''}${sl&&sl.type==='torch'?`<span class="bat"><i style="width:${INV.battery|0}%"></i></span>`:''}</div>`).join('');}
+function selectSlot(i){INV.sel=(i+6)%6;G.swingT=-1;renderHotbar();}
+addEventListener('keydown',e=>{if(!onFoot())return;const m=/^Digit([1-6])$/.exec(e.code);if(m)selectSlot(+m[1]-1);});
+addEventListener('wheel',e=>{if(!onFoot())return;selectSlot(INV.sel+(e.deltaY>0?1:-1));},{passive:true});
 
 // ---------- game state
 const G={phase:'menu',t:0,checkpoint:'lab',shake:0,hasAxe:false,axeCd:0,swingT:-1,stunT:0,exSpeed:4.4,grace:0,repair:0,heartT:0,fieldT:0,deathT:0,drive:null,cut:null};
@@ -675,6 +720,18 @@ const onFoot=()=>['lab','activating','chase','locked','factory'].includes(G.phas
 // axe view model
 const vm=buildAxe();vm.scale.setScalar(0.9);camera.add(vm);vm.visible=false;
 const VM_BASE={x:0.38,y:-0.42,z:-0.62};vm.position.set(VM_BASE.x,VM_BASE.y,VM_BASE.z);vm.rotation.set(0.35,0.2,-0.25);
+const vmOther=new THREE.Group();camera.add(vmOther);vmOther.position.set(0.32,-0.3,-0.55);
+const vmModels={torch:buildTorch(),gear:buildGear(),fuel:buildFuel(),scrap:buildScrap(),battery:buildBattery()};
+vmModels.gear.scale.setScalar(0.45);vmModels.fuel.scale.setScalar(0.55);vmModels.scrap.scale.setScalar(0.6);vmModels.battery.scale.setScalar(0.9);vmModels.torch.scale.setScalar(0.8);vmModels.torch.rotation.set(0.1,0.15,0);
+Object.values(vmModels).forEach(m=>{m.visible=false;vmOther.add(m);});
+function updateHeld(dt){const h=held();vm.visible=h==='axe';vmOther.visible=true;Object.entries(vmModels).forEach(([k,m])=>m.visible=h===k);
+  vmOther.position.set(0.32,-0.3+Math.sin(PL.bob)*0.012,-0.55);
+  // the torch only works while held, switched on and charged
+  const on=h==='torch'&&INV.torchOn&&INV.battery>0;
+  if(on){INV.battery=Math.max(0,INV.battery-dt*0.65);if(INV.battery<=0)say('The torch battery is dead. Find a battery.',3);}
+  flash.visible=on;flash.intensity=on?(INV.battery<15?(Math.random()<0.15?0.2:1.6):2.1):0;
+  G.batT=(G.batT||0)-dt;if(G.batT<=0){G.batT=0.5;renderHotbar();}}
+function useHeld(){const h=held();if(h==='axe')swing();else if(h==='battery'){if(INV.battery>=99){say('The torch is already fully charged.',2);return;}INV.battery=Math.min(100,INV.battery+60);invRemove('battery',1);SFX.pickup();say('Battery loaded into the torch.',2);}}
 
 // ---------- grid collision + pathing
 function solidAt(c,r){if(r<0||r>=ROWS||c<0||c>=COLS)return true;const ch=MAP[r][c];
@@ -695,17 +752,20 @@ function fieldAt(c,r){if(r<0||r>=ROWS||c<0||c>=COLS)return -1;return field[r*COL
 
 // ---------- reset / checkpoints
 function resetCommon(){
-  document.body.classList.remove('cine');$('death').hidden=true;ui.look.hidden=true;ui.vig.style.opacity=0;$('bottomLeft').hidden=false;vm.visible=false;$('cross').hidden=false;G.shake=0;G.swingT=-1;G.stunT=0;G.axeCd=0;G.repair=0;flashV=0;
+  document.body.classList.remove('cine');$('death').hidden=true;ui.look.hidden=true;ui.vig.style.opacity=0;$('bottomLeft').hidden=false;vm.visible=false;vmOther.visible=false;$('cross').hidden=false;G.shake=0;G.swingT=-1;G.stunT=0;G.axeCd=0;G.repair=0;flashV=0;
   ui.items.hidden=true;ui.driveHud.hidden=true;ui.prompt.hidden=true;ui.progress.hidden=true;ui.sub.classList.remove('on');ui.notice.classList.remove('on');
   canvas.style.filter='';driveTruck.g.visible=false;driveTruck.lights.forEach(l=>l.intensity=0);
-  scene.background.copy(VOID);scene.fog=new THREE.FogExp2(0x030203,0.04);moon.intensity=0;hemi.intensity=0.35;hemi.color.setHex(0x8890a0);
-  flash.visible=true;flash.intensity=1.5;ex.root.visible=true;ex.root.position.y=0;ex.claw=0;ex.root.rotation.set(0,0,0);
+  scene.background.copy(VOID);scene.fog=new THREE.FogExp2(0x020102,0.05);moon.intensity=0;hemi.intensity=0.06;hemi.color.setHex(0x8890a0);
+  flash.visible=false;ex.root.visible=true;$('hotbar').hidden=false;$('eyeState').hidden=true;EXS.aware=false;EXS.searchT=0;EXS.wp=null;ex.root.position.y=0;ex.claw=0;ex.root.rotation.set(0,0,0);
   slide.forEach(s=>{s.m.visible=false;s.landed=false;});engineOn(false);
   items.forEach(it=>{it.taken=false;it.mesh.visible=true;it.glow.visible=true;});
   PL.vx=PL.vz=0;PL.stamina=100;PL.exhausted=false;G.burstT=0;G.burstCd=2;G.unseenT=0;ex.jawBoost=0;growlSet(0);ui.stat.style.opacity=0;
 }
+// dim red emergency strobes once the power is cut
+function emergencyLights(){roomLights.forEach((l,i)=>l.intensity=0.12+0.22*Math.max(0,Math.sin(G.t*2.2+i*1.3)));}
 function setLights(mode){
-  roomLights.forEach((l,i)=>{l.distance=22;l.decay=1.6;if(mode==='normal'){l.color.setHex(0xffe2b8);l.intensity=i<3?1.1:0.7;}else{l.color.setHex(0xff2a14);l.intensity=1.0;}});
+  roomLights.forEach((l,i)=>{if(mode==='normal'){l.distance=22;l.decay=1.6;l.color.setHex(0xffe2b8);l.intensity=i<3?1.1:0.06;}else{l.distance=12;l.decay=1.8;l.color.setHex(0xff2010);l.intensity=0.25;}});
+  hemi.intensity=mode==='normal'?0.2:0.05;
   fixtures.forEach(f=>f.material.color.setHex(mode==='normal'?0xffe6c0:0xff3020));
   pod.ringMat.color.setHex(mode==='normal'?0x3fd0ff:0xff2a18);
 }
@@ -718,39 +778,41 @@ function startCheckpoint(cp){
     pod.clamps.forEach(c=>c.position.x=c.userData.home);setLights('normal');alarmOn(false);
     const [px,pz]=markers.X;placeEX(px,pz,-Math.PI/2,'dormant');EXS.y=0.3;ex.root.position.y=0.3;setEyes(0.06);
     PL.x=markers.P[0];PL.z=markers.P[1];yaw=0.55;pitch=0;
-    G.phase='lab';G.t=0;objective('Check on the deployment pod by the west wall.');
+    invReset([]);G.phase='lab';G.t=0;objective('Grab the torch, then check on the deployment pod by the west wall.');
     setTimeout(()=>say('Night shift, Lab 7. EX-15 is meant to stay powered down until morning.',4.5),900);
   } else if(cp==='factory'){
     doors.d1.open=doors.d2.open=true;doors.d1.t=doors.d2.t=1;shutter.y=1;shutter.target=1;shutter.solid=false;
-    G.hasAxe=true;vm.visible=true;items.find(i=>i.type==='axe').taken=true;const ai=items.find(i=>i.type==='axe');ai.mesh.visible=false;ai.glow.visible=false;
+    G.hasAxe=true;invReset(['torch','axe']);items.filter(i=>i.type==='axe'||i.type==='torch').forEach(ai=>{ai.taken=true;ai.mesh.visible=false;ai.glow.visible=false;});
     pod.clamps.forEach(c=>c.position.x=c.userData.home-0.9);setLights('red');alarmOn(true);
     placeEX(31,37.5,Math.PI,'stand');EXS.y=0;setEyes(1);EXS.active=true;
-    PL.x=41;PL.z=25;yaw=0.3;pitch=0;G.phase='factory';G.grace=2.5;G.exSpeed=4.8;
-    ui.items.hidden=false;refreshItems();objective('Find 3 gears, a fuel canister and scrap metal, then fix the truck.');say('EX-15 is through the shutter. <em>Keep moving.</em>',3);
+    PL.x=41;PL.z=25;yaw=0.3;pitch=0;G.phase='factory';G.grace=1.5;G.exSpeed=4.8;EXS.wp=[31,24];EXS.wpT=0;
+    ui.items.hidden=false;refreshItems();objective('Search the rooms for 3 gears, a fuel canister and scrap metal, then fix the drill truck.');say('EX-15 is through the shutter. <em>Stay out of its sight.</em>',3);
   } else if(cp==='drive'){startDrive();}
   fadeTo(0,900);
 }
 
 // ---------- interactions
 function nearestItem(){let best=null,bd=2.4;for(const it of items){if(it.taken)continue;const d=Math.hypot(it.x-PL.x,it.z-PL.z);if(d<bd){bd=d;best=it;}}return best;}
-function partsDone(){return items.filter(i=>i.type!=='axe').every(i=>i.taken);}
+function partsDone(){return invCount('gear')>=3&&invCount('fuel')>=1&&invCount('scrap')>=1;}
 function interact(){
   if(!onFoot())return;const it=nearestItem();
-  if(it){if(it.type!=='axe'&&G.phase!=='factory'&&G.phase!=='locked'){return;}
+  if(it){if(!invAdd(it.type)){say('Your toolbar is full.',2);return;}
     it.taken=true;it.mesh.visible=false;it.glow.visible=false;SFX.pickup();
-    if(it.type==='axe'){G.hasAxe=true;vm.visible=true;onAxe();}
-    else{refreshItems();G.exSpeed+=0.2;const left=items.filter(i=>i.type!=='axe'&&!i.taken).length;say(left?`Got the ${it.label.toLowerCase()}. ${left} part${left>1?'s':''} left.`:'That\'s everything. <em>Get to the truck!</em>',2.5);if(!left)objective('Get to the truck by the vehicle exit and hold E to repair it.');}
+    if(it.type==='axe'){if(!G.hasAxe){G.hasAxe=true;onAxe();}}
+    else if(it.type==='torch'){say('A torch. Hold it to see in the dark. <em>F</em> turns it on and off.',3.5);}
+    else if(it.type==='battery'){say('A battery. Hold it and left click to recharge the torch.',3);}
+    else{refreshItems();G.exSpeed+=0.2;const left=3-Math.min(3,invCount('gear'))+(invCount('fuel')?0:1)+(invCount('scrap')?0:1);say(left?`Got the ${it.label.toLowerCase()}. ${left} part${left>1?'s':''} left.`:'That\'s everything. <em>Get to the drill truck!</em>',2.5);if(!left)objective('Get to the drill truck by the vehicle exit and hold E to repair it.');}
   }
 }
-function refreshItems(){const n=t=>items.filter(i=>i.type===t&&i.taken).length;const rows=[['Gears',n('gear'),3],['Fuel canister',n('fuel'),1],['Scrap metal',n('scrap'),1]];
+function refreshItems(){const n=t=>invCount(t);const rows=[['Gears',n('gear'),3],['Fuel canister',n('fuel'),1],['Scrap metal',n('scrap'),1]];
   ui.itemList.innerHTML=rows.map(([l,a,b])=>`<li class="${a>=b?'done':''}">${l} ${a}/${b}</li>`).join('');}
-function swing(){if(!G.hasAxe||G.swingT>=0||G.axeCd>0)return;G.swingT=0;SFX.swing();}
+function swing(){if(held()!=='axe'||G.swingT>=0||G.axeCd>0)return;G.swingT=0;SFX.swing();}
 function onAxe(){
   // grabbing the axe is the checkpoint: the shutter starts to give
   G.checkpoint='factory';objective('Something is forcing the shutter. Get ready.');say('A fire axe. Left click to swing. A good hit stuns EX-15 for a few seconds.',4);
   setTimeout(()=>{if(G.phase!=='locked')return;notice('Shutter breached',1.6);SFX.bang();G.shake=0.6;shutter.target=1;
-    setTimeout(()=>{if(G.phase!=='locked')return;shutter.solid=false;G.phase='factory';G.exSpeed=4.8;G.grace=0.6;ui.items.hidden=false;refreshItems();
-      objective('Find 3 gears, a fuel canister and scrap metal, then fix the truck.');},1400);},3000);
+    setTimeout(()=>{if(G.phase!=='locked')return;shutter.solid=false;G.phase='factory';G.exSpeed=4.8;G.grace=0.6;EXS.aware=false;EXS.searchT=0;EXS.wp=[31,24];EXS.wpT=0;ui.items.hidden=false;refreshItems();
+      objective('Search the rooms for 3 gears, a fuel canister and scrap metal, then fix the drill truck.');},1400);},3000);
 }
 
 // ---------- on-foot update
@@ -776,15 +838,16 @@ function updatePlayer(dt){
       if(G.swingT>0.14&&!G.hitDone){G.hitDone=true;tryHit();}if(k>=1){G.swingT=-1;G.hitDone=false;}}
     vm.position.set(VM_BASE.x-sy*0.25,VM_BASE.y+Math.sin(PL.bob)*0.015+sy*0.12,VM_BASE.z-sy*0.15);vm.rotation.set(0.35-sy*1.7,0.2+sy*0.3,-0.25+sy*0.5);}
   if(G.axeCd>0)G.axeCd-=dt;
-  ui.axe.hidden=!G.hasAxe;if(G.hasAxe)ui.axe.innerHTML=G.axeCd>0?`<span class="tag">Axe</span> recovering ${G.axeCd.toFixed(1)}s`:`<span class="tag">Axe</span> ready · left click`;
+  updateHeld(dt);
+  ui.axe.hidden=held()!=='axe';if(held()==='axe')ui.axe.innerHTML=G.axeCd>0?`<span class="tag">Axe</span> recovering ${G.axeCd.toFixed(1)}s`:`<span class="tag">Axe</span> ready · left click`;
   // prompts
   const it=nearestItem();let pr='';
-  if(it&&(it.type==='axe'||G.phase==='factory'||G.phase==='locked'))pr=`<b>[E]</b> Pick up ${it.label.toLowerCase()}`;
+  if(it)pr=`<b>[E]</b> Pick up ${it.label.toLowerCase()}`;
   const nearTruck=Math.hypot(PL.x-truckCenter.x,PL.z-truckCenter.z)<4.6;
-  if(G.phase==='factory'&&nearTruck&&!it){pr=partsDone()?'Hold <b>[E]</b> to repair the truck':'The truck needs 3 gears, fuel and scrap metal';}
+  if(G.phase==='factory'&&nearTruck&&!it){pr=partsDone()?'Hold <b>[E]</b> to repair the drill truck':'The drill truck needs 3 gears, fuel and scrap metal';}
   ui.prompt.innerHTML=pr;ui.prompt.hidden=!pr;
   if(G.phase==='factory'&&nearTruck&&partsDone()&&keys.KeyE){G.repair+=dt/3.2;ui.progress.hidden=false;if(Math.random()<dt*6)noise({dur:0.08,vol:0.15,freq:3000,type:'bandpass',q:4});
-    if(G.repair>=1)finishRepair();}else ui.progress.hidden=G.repair<=0;
+    if(G.repair>=1){invRemove('gear',3);invRemove('fuel',1);invRemove('scrap',1);finishRepair();}}else ui.progress.hidden=G.repair<=0;
   ui.progress.firstElementChild.style.width=(G.repair*100)+'%';
   ui.look.hidden=locked()||mouseDown||G.phase==='dead';
 }
@@ -797,35 +860,72 @@ function tryHit(){
 }
 
 // ---------- EX-15 on-foot AI
+const WAYPOINTS=[[6,4],[56,4],[20,22],[45,28],[8,26],[75,7],[75,23],[15,33],[48,33],[31,37],[31,49]];
+function canSeePlayer(){
+  const dx=PL.x-EXS.x,dz=PL.z-EXS.z,d=Math.hypot(dx,dz);if(d>26)return false;
+  const fx=-Math.sin(EXS.yaw),fz=-Math.cos(EXS.yaw);const cs=(dx*fx+dz*fz)/(d||1);
+  // a 110 degree cone in front of it; nothing behind
+  if(cs<0.57&&!(d<2.4&&cs>0.05))return false;
+  return los(EXS.x,EXS.z,PL.x,PL.z);
+}
+// walk towards a point using the flow field; returns the remaining distance (0 if unreachable)
+function moveTo(tx,tz,sp,dt,turnK=8){
+  const key=Math.floor(tx/CELL)+','+Math.floor(tz/CELL);G.fieldT-=dt;
+  if(G.fieldKey!==key||G.fieldT<=0){G.fieldKey=key;G.fieldT=0.3;buildField(tx,tz);}
+  let mx=tx,mz=tz;const c=Math.floor(EXS.x/CELL),r=Math.floor(EXS.z/CELL);const here=fieldAt(c,r);
+  if(here<0&&!los(EXS.x,EXS.z,tx,tz))return 0;
+  if(!los(EXS.x,EXS.z,tx,tz)&&here>0){let best=here,bc=c,br=r;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const v=fieldAt(c+dc,r+dr);if(v>=0&&v<best){if(dr&&dc&&(solidAt(c+dc,r)||solidAt(c,r+dr)))continue;best=v;bc=c+dc;br=r+dr;}}mx=cc(bc);mz=cc(br);}
+  const dx=mx-EXS.x,dz=mz-EXS.z,d=Math.hypot(dx,dz);
+  if(d>0.05){EXS.x+=dx/d*sp*dt;EXS.z+=dz/d*sp*dt;resolve(EXS,0.45);EXS.mode=sp>4.6?'run':'walk';faceTowards(EXS.x+dx,EXS.z+dz,dt,turnK);}
+  return Math.hypot(tx-EXS.x,tz-EXS.z);
+}
+function pickWaypoint(){
+  const opts=WAYPOINTS.filter(([x,z])=>Math.hypot(x-EXS.x,z-EXS.z)>6);
+  let wp;if(Math.random()<0.4){wp=opts.reduce((a,b)=>Math.hypot(b[0]-PL.x,b[1]-PL.z)<Math.hypot(a[0]-PL.x,a[1]-PL.z)?b:a);}else wp=opts[(Math.random()*opts.length)|0];
+  EXS.wp=wp;EXS.wpT=0;
+}
 function updateEX(dt){
   const dPl=Math.hypot(PL.x-EXS.x,PL.z-EXS.z);
   if(G.stunT>0){G.stunT-=dt;EXS.mode='stunned';setEyes(Math.random()<0.3?0.2:0.9);if(Math.random()<dt*8)emit(V3(EXS.x,1.6,EXS.z),{n:2,color:0xffbb55,speed:2.5,size:0.12,life:0.4,spark:true,grow:0});}
   else if(G.grace>0){G.grace-=dt;EXS.mode='stand';setEyes(1);faceTowards(PL.x,PL.z,dt,4);}
-  else{
-    setEyes(1);G.fieldT-=dt;if(G.fieldT<=0){G.fieldT=0.25;buildField(PL.x,PL.z);}
-    let tx=PL.x,tz=PL.z;const c=Math.floor(EXS.x/CELL),r=Math.floor(EXS.z/CELL);const here=fieldAt(c,r);
-    if(!los(EXS.x,EXS.z,PL.x,PL.z)&&here>0){let best=here,bc=c,br=r;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const v=fieldAt(c+dc,r+dr);if(v>=0&&v<best){if(dr&&dc&&(solidAt(c+dc,r)||solidAt(c,r+dr)))continue;best=v;bc=c+dc;br=r+dr;}}tx=cc(bc);tz=cc(br);}
-    const dx=tx-EXS.x,dz=tz-EXS.z,d=Math.hypot(dx,dz);
-    const blocked=G.phase==='locked'&&EXS.z<34.5;
+  else if(G.phase==='locked'){
+    // it knows you're behind the shutter and tries to batter through
+    setEyes(1);const blocked=EXS.z<34.5;
     if(blocked){EXS.mode='attack';faceTowards(31,20,dt,6);G.bangT=(G.bangT||0)-dt;if(G.bangT<=0){G.bangT=0.62;SFX.bang();shutter.mesh.position.z=31+0.08;G.shake=Math.max(G.shake,0.25*clamp(1-dPl/25,0,1)+0.08);emit(V3(31+rand(-2,2),rand(1,4),31.3),{n:3,color:0x777068,speed:1,size:0.6,life:1});}}
-    else if(d>0.05){
-      const see=los(EXS.x,EXS.z,PL.x,PL.z);
-      if(see&&G.unseenT>3&&dPl<22){SFX.sting();G.shake=Math.max(G.shake,0.3);}
-      G.unseenT=see?0:(G.unseenT||0)+dt;
-      G.burstCd=(G.burstCd||0)-dt;
-      if(see&&dPl<10&&dPl>2.2&&G.burstCd<=0&&G.phase!=='toDrive'){G.burstT=1.15;G.burstCd=rand(4.5,7.5);SFX.screechShort();G.shake=Math.max(G.shake,0.35);}
-      if(G.burstT>0)G.burstT-=dt;
-      const sp=G.burstT>0?7.5:G.exSpeed;ex.jawBoost=G.burstT>0?1:0;
-      EXS.x+=dx/d*sp*dt;EXS.z+=dz/d*sp*dt;resolve(EXS,0.45);EXS.mode=sp>4.6?'run':'walk';faceTowards(EXS.x+dx,EXS.z+dz,dt,G.burstT>0?14:8);}
-    if(dPl<1.3&&!blocked&&G.phase!=='toDrive')return die();
+    else moveTo(31,33.6,G.exSpeed,dt);
+  } else {
+    setEyes(1);
+    const see=canSeePlayer();
+    if(see){if(!EXS.aware){SFX.sting();G.shake=Math.max(G.shake,0.3);if(G.phase!=='toDrive')notice('It sees you',1.2);}EXS.aware=true;EXS.lastX=PL.x;EXS.lastZ=PL.z;EXS.lostT=0;}
+    G.burstCd=(G.burstCd||0)-dt;
+    if(see&&dPl<10&&dPl>2.2&&G.burstCd<=0&&G.phase!=='toDrive'){G.burstT=1.15;G.burstCd=rand(4.5,7.5);SFX.screechShort();G.shake=Math.max(G.shake,0.35);}
+    if(G.burstT>0)G.burstT-=dt;
+    ex.jawBoost=G.burstT>0?1:0;
+    if(EXS.aware){
+      const sp=G.burstT>0?7.5:G.exSpeed;
+      if(!see)EXS.lostT+=dt;
+      const left=see?moveTo(PL.x,PL.z,sp,dt,G.burstT>0?14:8):moveTo(EXS.lastX,EXS.lastZ,sp,dt);
+      if(!see&&(left<0.9||EXS.lostT>7)){EXS.aware=false;EXS.searchT=rand(3,5);EXS.searchYaw=EXS.yaw;}
+      if(dPl<1.3&&G.phase!=='toDrive')return die();
+    } else if(EXS.searchT>0){
+      // stop and look around where it lost you
+      EXS.searchT-=dt;EXS.mode='stand';EXS.yaw=EXS.searchYaw+Math.sin((5-EXS.searchT)*1.4)*1.3;
+    } else {
+      if(!EXS.wp)pickWaypoint();EXS.wpT+=dt;
+      const left=moveTo(EXS.wp[0],EXS.wp[1],2.7,dt,5);
+      if(left<1.2||EXS.wpT>30)pickWaypoint();
+    }
+    const es=$('eyeState');es.hidden=false;
+    const st=EXS.aware?(see?'seen':'search'):EXS.searchT>0?'search':'hidden';
+    if(es.dataset.s!==st){es.dataset.s=st;es.className='panel '+st;es.textContent=st==='seen'?'It sees you':st==='search'?'It is searching':'Hidden';}
   }
   shutter.mesh.position.z=damp(shutter.mesh.position.z,31,10,dt);
   ex.root.position.set(EXS.x,EXS.y,EXS.z);ex.root.rotation.y=EXS.yaw;
   animEX(EXS.mode,dt,G.t,EXS.mode==='run'?(G.burstT>0?14:10.5):EXS.mode==='walk'?7:1);
   // dread feedback
-  const danger=clamp(1-dPl/13,0,1);ui.vig.style.opacity=(danger*0.85).toFixed(3);
+  const danger=clamp(1-dPl/13,0,1)*(EXS.aware?1:0.55);ui.vig.style.opacity=(danger*0.85).toFixed(3);
   G.heartT-=dt;if(danger>0.05&&G.heartT<=0){G.heartT=lerp(1.1,0.42,danger);SFX.heart(0.4+danger*0.6);}
-  dread(clamp(1-dPl/16,0,1));
+  dread(clamp(1-dPl/16,0,1)*(EXS.aware?1:0.6));
 }
 // static, growl and flickering lights that rise as EX-15 gets close
 function dread(v){
@@ -848,7 +948,7 @@ function updateDeath(dt){
   G.deathT+=dt;const k=G.deathT;
   if(G.prevPhase!=='drive'){
     // spin to face EX-15, then it lunges
-    const target=Math.atan2(-(EXS.x-PL.x),-(EXS.z-PL.z));yaw+=angDiff(yaw,target)*(1-Math.exp(-14*dt));pitch=damp(pitch,0.62,8,dt);vm.visible=false;
+    const target=Math.atan2(-(EXS.x-PL.x),-(EXS.z-PL.z));yaw+=angDiff(yaw,target)*(1-Math.exp(-14*dt));pitch=damp(pitch,0.62,8,dt);vm.visible=false;vmOther.visible=false;flash.visible=false;
     const lunge=smooth((k-0.15)/0.35);const fx=-Math.sin(yaw),fz=-Math.cos(yaw);
     ex.root.position.set(lerp(EXS.x,PL.x+fx*1.45,lunge),0,lerp(EXS.z,PL.z+fz*1.45,lunge));ex.root.rotation.y=Math.atan2(-(PL.x-ex.root.position.x),-(PL.z-ex.root.position.z));
     camera.position.set(PL.x+rand(-1,1)*0.05,1.6+rand(-1,1)*0.05,PL.z);camera.rotation.set(pitch,yaw,rand(-0.06,0.06));
@@ -857,8 +957,9 @@ function updateDeath(dt){
     camera.position.set(D.x+rand(-1,1)*0.05,2.3,D.z);camera.lookAt(bx,2.2,bz);camera.rotation.z+=rand(-0.05,0.05);animEX('lunge',dt,G.t);setEyes(1);}
   ui.flash.style.background='#a00';ui.flash.style.opacity=k<0.8?(0.15+Math.random()*0.35).toFixed(2):0;
   if(k>1.0&&$('death').hidden){ui.stat.style.opacity=0;fadeTo(0.85,200);$('death').hidden=false;ui.flash.style.opacity=0;
-    const tips={lab:'EX-15 is only slower than you while you sprint. When it lunges, break line of sight.',factory:'Swing the axe when EX-15 is close to stun it, then run for the next part. It lunges when it can see you.',drive:'Scraping the cave walls slows the truck down. Steer early and keep to the middle.'};
+    const tips={lab:'EX-15 is only slower than you while you sprint. When it lunges, break line of sight.',factory:'EX-15 only sees what is in front of it. Sneak around behind it, and use corners to break its line of sight.',drive:'Scraping the cave walls slows the truck down. Steer early and keep to the middle.'};
     $('deathTip').textContent=tips[G.checkpoint]||tips.lab;}
+  $('eyeState').hidden=true;
 }
 
 // ---------- lab intro + chase
@@ -866,7 +967,7 @@ function updateLab(dt){
   G.t+=dt;updatePlayer(dt);
   const [px,pz]=markers.X;const d=Math.hypot(PL.x-px,PL.z-pz);
   animEX('dormant',dt,G.t);ex.root.position.y=0.3;setEyes(0.05+(Math.random()<0.02?0.3:0));
-  if(d<6.5||G.t>22){G.phase='activating';G.act=0;alarmOn(true);setLights('red');notice('Warning: EX-15 activated',2.4);say('Why is the pod unlocking? <em>Nobody touched the controls.</em>',3);SFX.servo(1.6);objective('RUN. Get out of the lab.');}
+  if(d<6.5||G.t>22){G.phase='activating';G.act=0;alarmOn(true);setLights('red');setTimeout(()=>{if(onFoot())say(invCount('torch')?'The power just died. <em>Get your torch out.</em>':'The power just died. <em>Grab the torch off the floor!</em>',3.5);},2600);notice('Warning: EX-15 activated',2.4);say('Why is the pod unlocking? <em>Nobody touched the controls.</em>',3);SFX.servo(1.6);objective('RUN. Get out of the lab.');}
 }
 function updateActivating(dt){
   G.t+=dt;G.act+=dt;updatePlayer(dt);const a=G.act;
@@ -879,12 +980,12 @@ function updateActivating(dt){
     const k=smooth((a-2.6)/0.7);EXS.x=lerp(markers.X[0],markers.X[0]+1.6,k);EXS.y=lerp(0.3,0,k);mode='walk';}
   if(a>1.6)faceTowards(PL.x,PL.z,dt,3);
   ex.root.position.set(EXS.x,EXS.y,EXS.z);ex.root.rotation.y=EXS.yaw;animEX(mode,dt,G.t,mode==='walk'?5:1);
-  if(a>3.3){G.phase='chase';EXS.active=true;EXS.y=0;G.exSpeed=5.4;G.grace=0;}
-  roomLights.forEach(l=>l.intensity=0.6+0.6*Math.max(0,Math.sin(G.t*6)));
+  if(a>3.3){G.phase='chase';EXS.active=true;EXS.y=0;G.exSpeed=5.4;G.grace=0;EXS.aware=true;EXS.lastX=PL.x;EXS.lastZ=PL.z;EXS.lostT=0;}
+  emergencyLights();
 }
 function updateChase(dt){
   G.t+=dt;updatePlayer(dt);if(G.phase!=='chase')return;updateEX(dt);
-  roomLights.forEach(l=>l.intensity=0.6+0.6*Math.max(0,Math.sin(G.t*6)));
+  emergencyLights();
   if(!doors.d2.open&&PL.z<45){doors.d2.open=true;SFX.servo(0.7);}
   if(G.phase==='chase'&&PL.z<27.5){
     // factory shutter slams behind the player
@@ -893,8 +994,8 @@ function updateChase(dt){
     say('The shutter slammed shut behind you. That won\'t hold it for long. <em>Find a weapon.</em>',4);objective('Find something to fight back with.');
   }
 }
-function updateLocked(dt){G.t+=dt;updatePlayer(dt);if(G.phase!=='locked')return;updateEX(dt);roomLights.forEach(l=>l.intensity=0.6+0.6*Math.max(0,Math.sin(G.t*6)));}
-function updateFactory(dt){G.t+=dt;updatePlayer(dt);if(G.phase!=='factory')return;updateEX(dt);roomLights.forEach(l=>l.intensity=0.5+0.5*Math.max(0,Math.sin(G.t*4)));}
+function updateLocked(dt){G.t+=dt;updatePlayer(dt);if(G.phase!=='locked')return;updateEX(dt);emergencyLights();}
+function updateFactory(dt){G.t+=dt;updatePlayer(dt);if(G.phase!=='factory')return;updateEX(dt);emergencyLights();}
 function updateDoors(dt){
   for(const d of [doors.d1,doors.d2]){d.t=damp(d.t,d.open?1:0,3,dt);d.L.position.x=29.5-d.t*2.95;d.R.position.x=32.5+d.t*2.95;}
   shutter.y=damp(shutter.y,shutter.target,shutter.target===0?18:1.6,dt);shutter.mesh.position.y=WALL_H/2+shutter.y*(WALL_H-0.3);
@@ -903,21 +1004,21 @@ function updateDoors(dt){
 }
 function finishRepair(){
   G.phase='toDrive';G.repair=1;ui.prompt.hidden=true;ui.progress.hidden=true;SFX.pickup();alarmOn(false);
-  say('The engine coughs, then catches. <em>Go, go, go!</em>',2.5);factoryTruck.hood.rotation.x=0;
+  say('The drill truck coughs, then roars. <em>Go, go, go!</em>',2.5);factoryTruck.hood.rotation.x=0;factoryTruck.drill.rotation.x=0;
   if(document.exitPointerLock)document.exitPointerLock();
   setTimeout(()=>{fadeTo(1,700);},900);setTimeout(()=>{startDrive();fadeTo(0,900);},1800);
 }
 
 // ---------- drive
 function startDrive(){
-  G.checkpoint='drive';resetCommon();G.phase='drive';ui.items.hidden=true;ui.driveHud.hidden=false;$('bottomLeft').hidden=true;$('cross').hidden=true;
+  G.checkpoint='drive';resetCommon();$('hotbar').hidden=true;G.phase='drive';ui.items.hidden=true;ui.driveHud.hidden=false;$('bottomLeft').hidden=true;$('cross').hidden=true;
   setLights('red');doors.d1.open=doors.d2.open=true;
   roomLights.forEach(l=>{l.color.setHex(0xffb066);l.intensity=1.6;l.distance=34;l.decay=1.4;});
   flash.visible=false;scene.fog=new THREE.FogExp2(0x050304,0.028);hemi.intensity=0.22;
   driveTruck.g.visible=true;driveTruck.lights.forEach(l=>l.intensity=2.2);
   const i0=40;const t0=tang[i0];G.drive={i:i0,x:path[i0].x,z:path[i0].z,h:Math.atan2(-t0.x,-t0.z),speed:18,steer:0,exDist:i0*segLen-38,look:0,scrapeT:0,lamps:[0,0,0]};
   setEyes(1);EXS.active=true;engineOn(true);
-  objective('Drive! Steer with A and D. The truck goes forward on its own.');say('Hold <em>Space</em> to look back.',3);
+  objective('Drill out! Steer with A and D. The drill truck goes forward on its own.');say('Hold <em>Space</em> to look back.',3);
 }
 function nearestIndex(x,z,i){let best=i,bd=1e9;for(let k=Math.max(0,i-30);k<=Math.min(PATHN-1,i+60);k++){const p=path[k];const d=(p.x-x)**2+(p.z-z)**2;if(d<bd){bd=d;best=k;}}return best;}
 function updateDrive(dt){
@@ -931,7 +1032,7 @@ function updateDrive(dt){
   if(Math.abs(off)>4.7){const sgn=Math.sign(off);D.x=p.x+r.x*4.7*sgn;D.z=p.z+r.z*4.7*sgn;D.speed=Math.max(9,D.speed*0.55);
     const th=Math.atan2(-t.x,-t.z);D.h+=angDiff(D.h,th)*0.35;G.shake=0.5;if(D.scrapeT<=0){SFX.scrape();D.scrapeT=0.25;emit(V3(D.x+r.x*sgn*1.2,0.8,D.z+r.z*sgn*1.2),{n:6,color:0x6a5a4a,speed:2,size:0.8,life:0.8});}}
   D.scrapeT-=dt;
-  const tg=driveTruck.g;tg.position.set(D.x,Math.sin(G.t*20)*0.02,D.z);tg.rotation.set(0,D.h,-D.steer*0.04);driveTruck.wheels.forEach(w=>w.rotation.x-=D.speed*dt/0.46);
+  const tg=driveTruck.g;tg.position.set(D.x,Math.sin(G.t*20)*0.02,D.z);tg.rotation.set(0,D.h,-D.steer*0.04);driveTruck.drill.rotation.z+=dt*16;driveTruck.wheels.forEach(w=>w.rotation.x-=D.speed*dt/0.52);
   // EX-15 chases along the path
   const truckDist=D.i*segLen;let gap=truckDist-D.exDist;
   const exSpeed=gap>50?29:gap>20?22.5:21;D.exDist+=exSpeed*dt;gap=truckDist-D.exDist;
@@ -955,7 +1056,7 @@ function updateDrive(dt){
 }
 
 // ---------- ending cutscene
-function startCutscene(){growlSet(0);vm.visible=false;
+function startCutscene(){growlSet(0);vm.visible=false;vmOther.visible=false;
   G.phase='cutscene';G.cut={t:0,crashed:false,flags:{}};setCine(true);ui.driveHud.hidden=true;ui.vig.style.opacity=0;
   scene.background=new THREE.Color(0x0b1224);scene.fog=new THREE.Fog(0x0b1224,30,260);moon.intensity=0.65;hemi.intensity=0.3;hemi.color.setHex(0x6d80b0);
   roomLights.forEach(l=>l.intensity=0);
@@ -966,7 +1067,7 @@ function truckAt(t){// the truck's scripted path out of the cave
 function updateCutscene(dt){
   const C=G.cut;C.t+=dt;const t=C.t;const F=C.flags;const once=k=>F[k]?false:(F[k]=true);
   const tr=truckAt(t);const tg=driveTruck.g;
-  if(!C.crashed){tg.position.set(tr.x,Math.sin(t*20)*0.02,tr.z);tg.rotation.set(0,tr.h,0);driveTruck.wheels.forEach(w=>w.rotation.x-=22*dt/0.46);engineSet(22,0.08);}
+  if(!C.crashed){tg.position.set(tr.x,Math.sin(t*20)*0.02,tr.z);tg.rotation.set(0,tr.h,0);driveTruck.drill.rotation.z+=dt*16;driveTruck.wheels.forEach(w=>w.rotation.x-=22*dt/0.52);engineSet(22,0.08);}
   // EX-15
   if(t<3.6){ex.root.position.set(CAVE_X,0,caveEndZ+8);animEX('stand',dt,t);setEyes(t>2.6?(Math.random()<0.8?1:0.2):0);}
   else if(t<12.5){if(once('burst')){SFX.thud(1);SFX.screech();emit(V3(CAVE_X,2,caveEndZ-1),{n:24,color:0x6a5a4a,speed:5,size:1.4,life:1.6});for(let i=0;i<5;i++)emit(V3(CAVE_X+rand(-4,4),rand(2,8),caveEndZ-0.5),{n:2,color:0x555048,speed:3,size:0.5,life:1.2});G.shake=0.5;}
@@ -1051,7 +1152,7 @@ function frame(now){
     case 'activating':updateActivating(dt);break;
     case 'chase':updateChase(dt);if(G.phase==='chase')dread(clamp(1-Math.hypot(PL.x-EXS.x,PL.z-EXS.z)/16,0,1));break;
     case 'locked':updateLocked(dt);break;
-    case 'factory':updateFactory(dt);if(G.phase==='factory')dread(clamp(1-Math.hypot(PL.x-EXS.x,PL.z-EXS.z)/16,0,1));break;
+    case 'factory':updateFactory(dt);if(G.phase==='factory')dread(clamp(1-Math.hypot(PL.x-EXS.x,PL.z-EXS.z)/16,0,1)*(EXS.aware?1:0.6));break;
     case 'toDrive':G.t+=dt;updatePlayer(dt);updateEX(dt);break;
     case 'drive':updateDrive(dt);break;
     case 'cutscene':updateCutscene(dt);break;
@@ -1061,7 +1162,7 @@ function frame(now){
   renderer.render(scene,camera);
 }
 document.body.classList.add('nohud');menuScene();fadeTo(0,1200);requestAnimationFrame(frame);
-window.__ex15={G,begin,startDrive,startCutscene,PL,EXS,items,ex,camera,path:()=>path,setYaw:v=>{yaw=v;}};
+window.__ex15={INV,invAdd,canSeePlayer,G,begin,startDrive,startCutscene,PL,EXS,items,ex,camera,path:()=>path,setYaw:v=>{yaw=v;}};
 })();
 </script>
 </body>

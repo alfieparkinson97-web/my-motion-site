@@ -39,4 +39,4 @@ Checkout runs in **test mode** (`K.config.testMode: true`). No payment is taken,
 
 ## EX-15 (game)
 
-`ex15/index.html` is a standalone first-person horror chase game: escape the lab, fix the truck on the factory floor, and drive out through the caves while the robot EX-15 hunts you. It loads Three.js r128 from cdnjs; everything else (models, textures, sound) is generated in code. Open the file in a desktop browser and play with a keyboard and mouse.
+`ex15/index.html` is a standalone first-person horror chase game: escape the lab, search the dark facility with a torch for the parts to fix the drill truck, and drill out through the caves while the robot EX-15 hunts you. EX-15 only sees what is in front of it. It loads Three.js r128 from cdnjs; everything else (models, textures, sound) is generated in code. Open the file in a desktop browser and play with a keyboard and mouse.
