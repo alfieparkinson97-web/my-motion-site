@@ -47,6 +47,7 @@ body.nohud #hud{opacity:0}
 #sub{position:fixed;left:50%;bottom:calc(13vh + 20px);transform:translateX(-50%);max-width:min(760px,90vw);text-align:center;font-family:var(--display);font-size:clamp(16px,2.4vw,24px);text-shadow:0 2px 8px #000;opacity:0;transition:opacity .35s}
 #sub.on{opacity:1}
 #sub em{font-style:normal;color:var(--red)}
+#sub .ml{color:#5dff8f;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.8em;display:block}
 #notice{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;font-family:var(--display);font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:clamp(22px,4.5vw,54px);color:var(--red);text-shadow:0 0 24px rgba(255,40,20,.6);opacity:0;transition:opacity .3s;width:90vw}
 #notice.on{opacity:1}
 #hotbar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:6px}
@@ -134,6 +135,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
       <button class="ghost" data-cp="lab">1 · Lab</button>
       <button class="ghost" data-cp="factory">2 · Factory</button>
       <button class="ghost" data-cp="drive">3 · Cave escape</button>
+      <button class="ghost" data-cp="portal">4 · The portal</button>
     </div>
     <p class="small">Needs a keyboard and mouse. Sound on.</p>
   </div>
@@ -151,9 +153,9 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 <div class="screen" id="end" hidden>
   <div class="card">
     <div class="stripe"></div>
-    <h2 style="color:var(--ink)">Unit EX-15</h2>
+    <h2 style="color:#5dff8f">You followed the light</h2>
     <h1 style="font-size:clamp(40px,9vw,84px)">DEACTIV<span>A</span>TED</h1>
-    <p>You made it out of the facility. The rockslide didn't leave much of EX-15, just one arm sticking out of the rubble.</p>
+    <p>You escaped the facility, drilled out through the caves, watched the rockslide bury EX-15, then walked through a portal to meet something called Misleading Light. Nothing it told you was true. Probably.</p>
     <div class="row"><button id="btnAgain">Play again</button></div>
   </div>
 </div>
@@ -392,7 +394,7 @@ function buildTruck(withLights){
   // a mining drill truck: six wheels, yellow cab, engine block and a spiralled drill bit at the front
   const g=new THREE.Group();
   const paint=L({map:tex(128,128,(c,w,h)=>{c.fillStyle='#b88a1a';c.fillRect(0,0,w,h);grimeBlobs(c,w,h,26,'rgba(70,40,10,.35)');speckle(c,w,h,1200,['rgba(0,0,0,.25)','rgba(255,255,255,.05)']);}),shininess:30});
-  const glass=L({color:0x0b1418,shininess:120,specular:0x557788});
+  const glass=L({color:0x6a8a98,shininess:120,specular:0x557788,transparent:true,opacity:0.16,depthWrite:false});
   box(2.3,0.5,5.4,MAT.dark,0,0.85,0.3,g);
   box(2.2,1.1,1.8,paint,0,1.65,1.9,g);box(1.6,0.3,1.2,MAT.dark,0,2.3,1.9,g);
   const ex1=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,1.4,10),MAT.dark);ex1.position.set(0.85,2.7,2.5);g.add(ex1);
@@ -413,8 +415,13 @@ function buildTruck(withLights){
   const hl=new THREE.MeshBasicMaterial({color:withLights?0xfff3cf:0x2a2a22});box(0.3,0.16,0.08,hl,-0.6,2.55,-0.7,g);box(0.3,0.16,0.08,hl,0.6,2.55,-0.7,g);box(1.6,0.1,0.1,MAT.dark,0,2.55,-0.62,g);
   let lights=null;
   if(withLights){lights=[-0.6,0.6].map(x=>{const s=new THREE.SpotLight(0xfff1cc,0,60,0.45,0.5,1.2);s.position.set(x,2.55,-0.8);const t=new THREE.Object3D();t.position.set(x*0.6,0.2,-16);g.add(s);g.add(t);s.target=t;return s;});
-    glowSprite(0xfff1cc,1.1,g,-0.6,2.55,-0.78);glowSprite(0xfff1cc,1.1,g,0.6,2.55,-0.78);}
-  return {g,hood,wheels,lights,drill};
+    g.userData.hlGlow=[glowSprite(0xfff1cc,1.1,g,-0.6,2.55,-0.78),glowSprite(0xfff1cc,1.1,g,0.6,2.55,-0.78)];}
+  let steer=null;
+  if(withLights){box(1.8,0.34,0.36,MAT.dark,0,1.78,-0.6,g);box(0.22,0.06,0.12,new THREE.MeshBasicMaterial({color:0x1d4a2a}),0.25,1.97,-0.7,g);
+    steer=new THREE.Group();steer.position.set(-0.42,1.86,-0.62);steer.rotation.x=-0.75;g.add(steer);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(0.16,0.022,8,24),MAT.black);steer.add(rim);box(0.36,0.03,0.03,MAT.black,0,0,0,steer);box(0.03,0.2,0.03,MAT.black,0,-0.09,0,steer);
+    [-0.93,0.93].forEach(x=>box(0.07,0.65,0.07,MAT.dark,x,2.15,-0.8,g));box(1.9,0.08,0.08,MAT.dark,0,2.47,-0.8,g);}
+  return {g,hood,wheels,lights,drill,steer};
 }
 const factoryTruck=buildTruck(false);factoryTruck.g.position.set(31,0,7);factoryTruck.hood.rotation.x=1.0;factoryTruck.drill.rotation.x=0.12;facility.add(factoryTruck.g);
 factoryTruck.wheels[1].position.y=0.3;factoryTruck.wheels[1].rotation.x=0.4;factoryTruck.g.rotation.z=0.03;
@@ -552,11 +559,12 @@ function emit(pos,{n=8,color=0x9a8a7a,speed=2,size=1,life=1.2,up=1,spark=false,g
 function updateParts(dt){for(const p of parts){if(p.life<=0)continue;p.life-=dt;if(p.life<=0){p.s.visible=false;continue;}const k=p.life/p.max;p.s.position.addScaledVector(p.v,dt);p.v.multiplyScalar(p.spark?0.96:0.97);if(p.spark)p.v.y-=9*dt;p.s.material.opacity=(p.spark?1:0.55)*k;p.s.scale.setScalar(p.size*(1+(1-k)*p.grow));}}
 
 // ---------- cave
-const CAVE_X=600, SAMPLES=2400;
+const CAVE_X=600, SAMPLES=4600;
 const caveGroup=new THREE.Group();scene.add(caveGroup);
+const caveRocks=[];
 let path=[],tang=[],rightV=[],segLen=0,caveEndZ=0,PATHN=0;
 {
-  const N=36,pts=[];
+  const N=70,pts=[];
   for(let i=0;i<=N+2;i++){const w=clamp(Math.min(i/3,(N-i)/5),0,1);const x=(22*Math.sin(i*0.42)+10*Math.sin(i*0.17+1))*w;pts.push(V3(CAVE_X+x,0,-i*20));}
   const curve=new THREE.CatmullRomCurve3(pts.slice(0,N+1),false,'centripetal');
   caveEndZ=-N*20;
@@ -565,7 +573,7 @@ let path=[],tang=[],rightV=[],segLen=0,caveEndZ=0,PATHN=0;
   // tube
   function idxForZ(z){let lo=0,hi=PATHN-1;while(lo<hi){const m=(lo+hi)>>1;if(path[m].z>z)lo=m+1;else hi=m;}return lo;}
   const tubeCurve=new THREE.CatmullRomCurve3(pts.slice(0,N+1).map(p=>V3(p.x,2.4,p.z)),false,'centripetal');
-  const tg=new THREE.TubeGeometry(tubeCurve,520,7.2,16,false);
+  const tg=new THREE.TubeGeometry(tubeCurve,1000,7.2,16,false);
   const pa=tg.attributes.position;const v=V3();
   for(let i=0;i<pa.count;i++){v.fromBufferAttribute(pa,i);const n=Math.sin(v.x*0.35)*Math.cos(v.z*0.27)*0.9+Math.sin(v.y*1.3+v.z*0.6)*0.5+Math.sin(v.z*0.05)*0.6;
     // push the wall outwards/inwards along the local radial direction (approximate with xz offset from the nearest path point)
@@ -580,6 +588,8 @@ let path=[],tang=[],rightV=[],segLen=0,caveEndZ=0,PATHN=0;
   for(let i=0;i<pos.length/6-1;i++){const a=i*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}
   const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));rg.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));rg.setIndex(idx);rg.computeVertexNormals();
   const road=new THREE.Mesh(rg,MAT.dirt);caveGroup.add(road);
+  // boulders blocking the road: the drill smashes them, but it costs speed
+  for(let i=420;i<PATHN-300;i+=rand(330,480)|0){const p=path[i],r=rightV[i];const off=rand(-3.2,3.2);const m=new THREE.Mesh(rockGeo(rand(1.1,1.5)),MAT.rock);m.position.set(p.x+r.x*off,0.8,p.z+r.z*off);caveGroup.add(m);caveRocks.push({m,i,x:m.position.x,z:m.position.z,broken:false});}
   // mine supports + emergency lamps
   for(let i=60;i<PATHN-40;i+=95){const p=path[i],r=rightV[i],t=tang[i];const yaw=Math.atan2(-t.x,-t.z);
     [-1,1].forEach(sd=>{const post=box(0.35,5.2,0.35,MAT.wood,p.x+r.x*6.2*sd,2.6,p.z+r.z*6.2*sd,caveGroup);post.rotation.y=yaw;});
@@ -592,8 +602,8 @@ let path=[],tang=[],rightV=[],segLen=0,caveEndZ=0,PATHN=0;
 
 // ---------- outside (cave mouth, road, cliff)
 const outside=new THREE.Group();scene.add(outside);
-const crashPoint={x:603.6,z:-986.5};
-const exStop={x:600.1,z:-972};
+const crashPoint={x:603.6,z:caveEndZ-266.5};
+const exStop={x:600.1,z:caveEndZ-252};
 {
   const z0=caveEndZ;const mtn=L({map:tex(256,256,g=>g.drawImage(rockTex.image,0,0))});mtn.map.repeat.set(8,4);
   box(160,70,14,mtn,CAVE_X-8.5-80,35,z0+7,outside);box(160,70,14,mtn,CAVE_X+8.5+80,35,z0+7,outside);box(17,60,14,mtn,CAVE_X,10.5+30,z0+7,outside);
@@ -715,7 +725,7 @@ addEventListener('wheel',e=>{if(!onFoot())return;selectSlot(INV.sel+(e.deltaY>0?
 const G={phase:'menu',t:0,checkpoint:'lab',shake:0,hasAxe:false,axeCd:0,swingT:-1,stunT:0,exSpeed:4.4,grace:0,repair:0,heartT:0,fieldT:0,deathT:0,drive:null,cut:null};
 const PL={x:0,z:0,vx:0,vz:0,stamina:100,exhausted:false,bob:0,lastBob:0};
 const EXS={x:0,z:0,yaw:0,y:0,mode:'dormant',active:false};
-const onFoot=()=>['lab','activating','chase','locked','factory'].includes(G.phase);
+const onFoot=()=>['lab','activating','chase','locked','factory','portal','realm'].includes(G.phase);
 
 // axe view model
 const vm=buildAxe();vm.scale.setScalar(0.9);camera.add(vm);vm.visible=false;
@@ -758,6 +768,7 @@ function resetCommon(){
   scene.background.copy(VOID);scene.fog=new THREE.FogExp2(0x050304,0.03);moon.intensity=0;hemi.intensity=0.24;hemi.color.setHex(0x8890a0);
   flash.visible=false;ex.root.visible=true;$('hotbar').hidden=false;$('eyeState').hidden=true;EXS.aware=false;EXS.searchT=0;EXS.wp=null;ex.root.position.y=0;ex.claw=0;ex.root.rotation.set(0,0,0);
   slide.forEach(s=>{s.m.visible=false;s.landed=false;});engineOn(false);
+  G.zone='facility';portal.g.visible=false;ml.g.visible=false;
   items.forEach(it=>{it.taken=false;it.mesh.visible=true;it.glow.visible=true;});
   PL.vx=PL.vz=0;PL.stamina=100;PL.exhausted=false;G.burstT=0;G.burstCd=2;G.unseenT=0;ex.jawBoost=0;growlSet(0);ui.stat.style.opacity=0;
 }
@@ -788,6 +799,7 @@ function startCheckpoint(cp){
     PL.x=41;PL.z=25;yaw=0.3;pitch=0;G.phase='factory';G.grace=1.5;G.exSpeed=4.8;EXS.wp=[31,24];EXS.wpT=0;
     ui.items.hidden=false;refreshItems();objective('Search the rooms for 3 gears, a fuel canister and scrap metal, then fix the drill truck.');say('EX-15 is through the shutter. <em>Stay out of its sight.</em>',3);
   } else if(cp==='drive'){startDrive();}
+  else if(cp==='portal'){startPortal();return;}
   fadeTo(0,900);
 }
 
@@ -795,7 +807,7 @@ function startCheckpoint(cp){
 function nearestItem(){let best=null,bd=2.4;for(const it of items){if(it.taken)continue;const d=Math.hypot(it.x-PL.x,it.z-PL.z);if(d<bd){bd=d;best=it;}}return best;}
 function partsDone(){return invCount('gear')>=3&&invCount('fuel')>=1&&invCount('scrap')>=1;}
 function interact(){
-  if(!onFoot())return;const it=nearestItem();
+  if(!onFoot())return;if(G.phase==='realm'){mlTalkNow();return;}if(G.phase==='portal')return;const it=nearestItem();
   if(it){if(!invAdd(it.type)){say('Your toolbar is full.',2);return;}
     it.taken=true;it.mesh.visible=false;it.glow.visible=false;SFX.pickup();
     if(it.type==='axe'){if(!G.hasAxe){G.hasAxe=true;onAxe();}}
@@ -826,7 +838,7 @@ function updatePlayer(dt){
   const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
   let tvx=0,tvz=0;if(len>0){tvx=(fx*f+rx*s)/len*spd;tvz=(fz*f+rz*s)/len*spd;}
   PL.vx=damp(PL.vx,tvx,12,dt);PL.vz=damp(PL.vz,tvz,12,dt);
-  PL.x+=PL.vx*dt;PL.z+=PL.vz*dt;resolve(PL,0.35);
+  PL.x+=PL.vx*dt;PL.z+=PL.vz*dt;zoneResolve(PL);
   const sp=Math.hypot(PL.vx,PL.vz);PL.bob+=dt*sp*1.9;
   const stepI=Math.floor(PL.bob/Math.PI);if(stepI!==PL.lastBob){PL.lastBob=stepI;if(sp>1)SFX.step();}
   const shake=G.shake>0?G.shake:0;
@@ -1016,9 +1028,9 @@ function startDrive(){
   roomLights.forEach(l=>{l.color.setHex(0xffb066);l.intensity=1.6;l.distance=34;l.decay=1.4;});
   flash.visible=false;scene.fog=new THREE.FogExp2(0x050304,0.028);hemi.intensity=0.22;
   driveTruck.g.visible=true;driveTruck.lights.forEach(l=>l.intensity=2.2);
-  const i0=40;const t0=tang[i0];G.drive={i:i0,x:path[i0].x,z:path[i0].z,h:Math.atan2(-t0.x,-t0.z),speed:18,steer:0,exDist:i0*segLen-38,look:0,scrapeT:0,lamps:[0,0,0]};
+  const i0=40;const t0=tang[i0];caveRocks.forEach(rk=>{rk.broken=false;rk.m.visible=true;});driveTruck.g.userData.hlGlow.forEach(s=>s.visible=false);G.drive={i:i0,x:path[i0].x,z:path[i0].z,h:Math.atan2(-t0.x,-t0.z),speed:18,steer:0,exDist:i0*segLen-38,look:0,scrapeT:0,lamps:[0,0,0]};
   setEyes(1);EXS.active=true;engineOn(true);
-  objective('Drill out! Steer with A and D. The drill truck goes forward on its own.');say('Hold <em>Space</em> to look back.',3);
+  objective('Drill out! Steer with A and D. The drill truck goes forward on its own. Hold Space to lean out and look back.');say('Hold <em>Space</em> to look back.',3);
 }
 function nearestIndex(x,z,i){let best=i,bd=1e9;for(let k=Math.max(0,i-30);k<=Math.min(PATHN-1,i+60);k++){const p=path[k];const d=(p.x-x)**2+(p.z-z)**2;if(d<bd){bd=d;best=k;}}return best;}
 function updateDrive(dt){
@@ -1032,6 +1044,8 @@ function updateDrive(dt){
   if(Math.abs(off)>4.7){const sgn=Math.sign(off);D.x=p.x+r.x*4.7*sgn;D.z=p.z+r.z*4.7*sgn;D.speed=Math.max(9,D.speed*0.55);
     const th=Math.atan2(-t.x,-t.z);D.h+=angDiff(D.h,th)*0.35;G.shake=0.5;if(D.scrapeT<=0){SFX.scrape();D.scrapeT=0.25;emit(V3(D.x+r.x*sgn*1.2,0.8,D.z+r.z*sgn*1.2),{n:6,color:0x6a5a4a,speed:2,size:0.8,life:0.8});}}
   D.scrapeT-=dt;
+  for(const rk of caveRocks){if(rk.broken||Math.abs(rk.i-D.i)>30)continue;if(Math.hypot(rk.x-D.x,rk.z-D.z)<2.4){rk.broken=true;rk.m.visible=false;D.speed=Math.max(8,D.speed*0.5);G.shake=0.9;SFX.rock(1);SFX.scrape();
+    for(let k=0;k<4;k++)emit(V3(rk.x,1+k*0.4,rk.z),{n:5,color:0x7a6a5a,speed:4,size:1.2,life:1.2});say('The drill smashed through! <em>But it slowed you down.</em>',2);}}
   const tg=driveTruck.g;tg.position.set(D.x,Math.sin(G.t*20)*0.02,D.z);tg.rotation.set(0,D.h,-D.steer*0.04);driveTruck.drill.rotation.z+=dt*16;driveTruck.wheels.forEach(w=>w.rotation.x-=D.speed*dt/0.52);
   // EX-15 chases along the path
   const truckDist=D.i*segLen;let gap=truckDist-D.exDist;
@@ -1047,16 +1061,18 @@ function updateDrive(dt){
   roomLights.slice(3).forEach(l=>l.intensity=0);
   // camera
   D.look=damp(D.look,keys.Space?1:0,6,dt);
-  const back=D.look;const ch=D.h+back*Math.PI;const sh=G.shake;
-  const camBack=lerp(7.5,-0.8,back),camUp=lerp(3.4,3.5,back);
-  camera.position.set(D.x+Math.sin(D.h)*camBack+rand(-1,1)*sh*0.1,camUp+rand(-1,1)*sh*0.08,D.z+Math.cos(D.h)*camBack);
-  camera.rotation.set(-0.12-back*0.08,ch,0);
+  // first person from the driver's seat; Space leans out of the window to look back
+  const lk=smooth(D.look);const sh=G.shake;
+  const seat=V3(lerp(-0.42,-1.4,lk),2.2,lerp(-0.12,-0.3,lk)).applyAxisAngle(V3(0,1,0),D.h);
+  camera.position.set(D.x+seat.x+rand(-1,1)*sh*0.05,seat.y+Math.sin(G.t*23)*0.012+rand(-1,1)*sh*0.05,D.z+seat.z);
+  camera.rotation.set(-0.07+rand(-1,1)*sh*0.01,D.h+lk*3.05+D.steer*0.06*(1-lk),-D.steer*0.025);
+  if(driveTruck.steer)driveTruck.steer.rotation.z=D.steer*1.4;
   engineSet(D.speed,0.05+D.speed/24*0.05);
   if(D.i>=PATHN-1-28)startCutscene();
 }
 
 // ---------- ending cutscene
-function startCutscene(){growlSet(0);vm.visible=false;vmOther.visible=false;
+function startCutscene(){growlSet(0);driveTruck.g.userData.hlGlow.forEach(s=>s.visible=true);vm.visible=false;vmOther.visible=false;
   G.phase='cutscene';G.cut={t:0,crashed:false,flags:{}};setCine(true);ui.driveHud.hidden=true;ui.vig.style.opacity=0;
   scene.background=new THREE.Color(0x0b1224);scene.fog=new THREE.Fog(0x0b1224,30,260);moon.intensity=0.65;hemi.intensity=0.3;hemi.color.setHex(0x6d80b0);
   roomLights.forEach(l=>l.intensity=0);
@@ -1121,10 +1137,158 @@ function updateCutscene(dt){
         ex.claw=smooth((t-22)/5.2);if(once('servo'))SFX.servo(5);
         const flick=t<25?1:t<27?(Math.random()<0.5?0.8:0.05):Math.max(0,1-(t-27)*2);setEyes(flick);if(t>26.6&&once('pd'))SFX.powerDown();
       }
-      if(t>=28.5&&once('end')){fadeTo(1,1400);setTimeout(()=>{G.phase='end';setCine(false);document.body.classList.add('nohud');$('end').hidden=false;},1600);}
+      if(t>=28.5&&once('end')){fadeTo(1,1400);setTimeout(()=>startPortal(),1600);}
     }
   }
   if(G.shake>0)G.shake=Math.max(0,G.shake-dt*1.2);
+}
+
+// ---------- portal + Misleading Light
+const portalTex=tex(256,256,(g,w,h)=>{g.clearRect(0,0,w,h);const gr=g.createRadialGradient(128,128,0,128,128,128);gr.addColorStop(0,'rgba(220,255,230,1)');gr.addColorStop(.35,'rgba(60,255,130,.8)');gr.addColorStop(.8,'rgba(10,120,50,.5)');gr.addColorStop(1,'rgba(0,40,15,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);
+  g.strokeStyle='rgba(200,255,215,.55)';g.lineWidth=3;for(let a=0;a<6;a++){g.beginPath();for(let t=0;t<1;t+=0.01){const r=t*120,an=a*Math.PI/3+t*7;g.lineTo(128+Math.cos(an)*r,128+Math.sin(an)*r);}g.stroke();}});
+const portal={g:new THREE.Group(),scale:0,open:false};
+{const g=portal.g;scene.add(g);g.visible=false;
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.45,0.13,12,64),new THREE.MeshBasicMaterial({color:0x6dff9a}));g.add(ring);
+  const dm=new THREE.MeshBasicMaterial({map:portalTex,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide});
+  portal.d1=new THREE.Mesh(new THREE.CircleGeometry(1.4,48),dm);g.add(portal.d1);portal.d2=new THREE.Mesh(new THREE.CircleGeometry(1.3,48),dm);portal.d2.position.z=0.02;g.add(portal.d2);
+  glowSprite(0x3dff7a,7,g);}
+function buildML(){
+  // Misleading Light: a floating figure of glowing green crystal with a horned crown and a scythe
+  const g=new THREE.Group();const body=new THREE.Group();g.add(body);
+  const crystal=new THREE.MeshPhongMaterial({color:0x0b4a22,emissive:0x1aff6a,emissiveIntensity:0.5,shininess:140,specular:0xccffdd,transparent:true,opacity:0.82,flatShading:true});
+  const bright=new THREE.MeshBasicMaterial({color:0xd8ffe2});
+  const sh=(r,sx,sy,sz,x,y,z,rx=0,rz=0,mat=crystal,parent=body)=>{const m=new THREE.Mesh(new THREE.OctahedronGeometry(r,0),mat);m.scale.set(sx,sy,sz);m.position.set(x,y,z);m.rotation.set(rx,0,rz);parent.add(m);return m;};
+  sh(0.62,1.15,1.25,0.6,0,2.35,0);sh(0.36,1,1.5,0.7,0,1.5,0);sh(0.16,1,1,1,0,2.4,-0.32,0,0,bright);
+  [-1,1].forEach(sd=>{sh(0.26,0.85,3.3,0.8,0.36*sd,0.45,0,0,0.1*sd);sh(0.3,1.7,0.7,0.9,0.78*sd,2.85,0,0,-0.3*sd);sh(0.12,1,1,1,0.36*sd,1.05,-0.15,0,0,bright);});
+  const head=new THREE.Group();head.position.y=3.5;body.add(head);
+  sh(0.44,1,1.05,0.55,0,0,0,0,0,crystal,head);sh(0.2,1,1,0.4,0,-0.02,-0.12,0,Math.PI/4,bright,head);
+  [-0.13,0.13].forEach(x=>{const e=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.16,3),bright);e.position.set(x,0.06,-0.26);e.rotation.z=x>0?-0.5:0.5;head.add(e);});
+  const hornMat=new THREE.MeshPhongMaterial({color:0x2a9a4a,emissive:0x5dff8f,emissiveIntensity:0.9,shininess:100,transparent:true,opacity:0.9});
+  [[-1,0.9],[0,1],[1,0.9]].forEach(([sd,k])=>{const pts=[V3(0.15*sd,0.35,0),V3(0.45*sd,0.75*k,0),V3(0.55*sd+(sd?0:0),1.1*k,0),V3(0.35*sd,1.35*k,0)];if(!sd)pts.forEach((p,i)=>{p.x=0;p.y=0.35+i*0.33;p.z=-0.05*i;});
+    head.add(new THREE.Mesh(taperTube(pts,0.12,0.004,20,8),hornMat));});
+  // right arm with a glowing blade, left arm with the scythe
+  const armR=new THREE.Group();armR.position.set(0.95,2.85,0);body.add(armR);sh(0.2,0.8,2.4,0.8,0.35,-0.45,0,0,0.7,crystal,armR);
+  const blade=sh(0.14,0.6,5.5,0.3,1.2,-0.75,-0.2,0,1.35,bright,armR);
+  const armL=new THREE.Group();armL.position.set(-0.95,2.85,0);body.add(armL);sh(0.2,0.8,2.4,0.8,-0.35,-0.45,0,0,-0.6,crystal,armL);
+  const scythe=new THREE.Group();scythe.position.set(-1.1,-0.7,-0.2);scythe.rotation.z=0.35;armL.add(scythe);
+  const handle=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.06,5.2,8),hornMat);scythe.add(handle);
+  const arc=[];for(let k=0;k<=12;k++){const a=Math.PI*0.55+k/12*Math.PI*0.95;arc.push(V3(Math.cos(a)*1.7-0.1,2.5+Math.sin(a)*1.2-1.1+k*0.05,0));}
+  const bl=new THREE.Mesh(taperTube(arc,0.28,0.01,30,8),new THREE.MeshPhongMaterial({color:0x0f6a30,emissive:0x2aff70,emissiveIntensity:0.6,transparent:true,opacity:0.6,shininess:120}));bl.scale.z=0.25;scythe.add(bl);
+  const edge=new THREE.Mesh(taperTube(arc.map(p=>V3(p.x*1.04,p.y+0.05,0)),0.05,0.004,30,6),bright);scythe.add(edge);
+  const glows=[glowSprite(0x3dff7a,5.5,body,0,2.6,0.2),glowSprite(0x9dffbb,1.6,head,0,0,-0.3),glowSprite(0x3dff7a,1.8,body,0,2.4,-0.35)];
+  const light=new THREE.PointLight(0x3dff7a,2.4,28,1.3);light.position.set(0,2.5,-1);g.add(light);
+  g.scale.setScalar(1.4);g.visible=false;scene.add(g);
+  return {g,body,head,armL,armR,glows,light,x:0,z:0};
+}
+const ml=buildML();
+const REALM={x:-600,z:0};
+const realm=new THREE.Group();scene.add(realm);
+{
+  const fl=new THREE.Mesh(new THREE.CircleGeometry(60,64),L({map:tex(256,256,(g,w,h)=>{g.fillStyle='#030a05';g.fillRect(0,0,w,h);g.strokeStyle='rgba(60,255,130,.22)';g.lineWidth=2;for(let i=0;i<=w;i+=32){g.beginPath();g.moveTo(i,0);g.lineTo(i,h);g.stroke();g.beginPath();g.moveTo(0,i);g.lineTo(w,i);g.stroke();}}),shininess:90,specular:0x1a4a2a}));
+  fl.material.map.repeat.set(30,30);fl.rotation.x=-Math.PI/2;fl.position.set(REALM.x,0,REALM.z);realm.add(fl);
+  const cm=new THREE.MeshPhongMaterial({color:0x0b4a22,emissive:0x1aff6a,emissiveIntensity:0.35,shininess:140,transparent:true,opacity:0.8,flatShading:true});
+  realm.userData.shards=[];
+  for(let i=0;i<46;i++){const a=rand(0,Math.PI*2),d=rand(10,42);const m=new THREE.Mesh(new THREE.OctahedronGeometry(rand(0.4,1.8),0),cm);m.scale.y=rand(1.5,3);m.position.set(REALM.x+Math.cos(a)*d,rand(0.5,14),REALM.z+Math.sin(a)*d);m.userData.s=rand(-0.6,0.6);realm.add(m);realm.userData.shards.push(m);}
+  for(let k=0;k<9;k++){const z=REALM.z+14-k*2.6;const st=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.4,0.08,12),new THREE.MeshBasicMaterial({color:0x2a8a4a}));st.position.set(REALM.x+Math.sin(k*1.3)*0.8,0.05,z);realm.add(st);}
+  const mg=new THREE.BufferGeometry();const mp=[];for(let i=0;i<500;i++)mp.push(REALM.x+rand(-40,40),rand(0,20),REALM.z+rand(-40,40));mg.setAttribute('position',new THREE.Float32BufferAttribute(mp,3));
+  realm.userData.motes=new THREE.Points(mg,new THREE.PointsMaterial({color:0x7dffa5,size:0.12,transparent:true,opacity:0.8}));realm.add(realm.userData.motes);
+}
+const ML_LINES=[
+  'Oh. You actually came through. Most people just stand there.',
+  'The light is always on your side. Probably.',
+  'Do you hear the gears? They miss you.',
+  'I counted every step you took. You took too many.',
+  'EX-15 was my friend. We used to play hide and seek. It was very bad at hiding.',
+  'The exit is that way. Or that way. I forget which way is that way.',
+  'Your torch has been lying to you this whole time.',
+  'Green is the colour of trust. Remember that.',
+  'The truck was not real. Neither am I. Neither is that rock.',
+  "Don't look behind you. Okay, you can look now. Too late.",
+  "I'm not misleading you. I'm just leading you. Wrong.",
+  "Seven. That's the number. Of what? I'm not allowed to say.",
+  'The rocks were my idea. You are welcome.',
+  'Do you want to go home? Home is further than you think. And smaller.',
+  'Shh. The walls are listening. There are no walls. They are still listening.',
+  "I like your hat. You don't have a hat. I still like it.",
+  'Every portal is a door. Every door is a portal. Every chair is a chair.',
+  'I was here before the facility. I will be here after the snacks run out.',
+];
+function mlSpeak(line){
+  say(`<span class="ml">Misleading Light</span>${line}`,Math.max(3.5,line.length*0.07));
+  const n=line.split(' ').length;for(let i=0;i<n;i++)tone({freq:rand(320,760),to:rand(300,900),dur:0.08,vol:0.05,type:'triangle',delay:i*0.12});
+  tone({freq:1320,dur:0.6,vol:0.03,attack:0.05});
+}
+function mlNextLine(){const R=G.realm;let pool=ML_LINES.slice(1).filter(l=>!R.used.includes(l));if(!pool.length){R.used=[];pool=ML_LINES.slice(1);}const l=R.lines===0?ML_LINES[0]:pool[(Math.random()*pool.length)|0];R.used.push(l);R.lines++;R.talkT=rand(4.2,6);mlSpeak(l);
+  if(R.lines>=10&&!R.ending){R.ending=true;setTimeout(()=>{mlSpeak('Well. Goodbye. Or hello. They are the same word if you say them fast enough.');},5200);
+    setTimeout(()=>{fadeTo(1,1600);ui.flash.style.background='#3dff7a';flashV=0.6;},10500);setTimeout(()=>{G.phase='end';setCine(false);document.body.classList.add('nohud');if(document.exitPointerLock)document.exitPointerLock();$('end').hidden=false;},12500);}}
+function mlTalkNow(){const R=G.realm;if(R&&R.started&&!R.ending&&R.talkT<R.talkMax-1.2)mlNextLine();}
+function setupOutside(){
+  scene.background=new THREE.Color(0x0b1224);scene.fog=new THREE.Fog(0x0b1224,30,260);moon.intensity=0.65;hemi.intensity=0.32;hemi.color.setHex(0x6d80b0);
+  roomLights.forEach(l=>l.intensity=0);
+  driveTruck.g.visible=true;driveTruck.g.position.set(crashPoint.x-0.6,0.15,crashPoint.z+2.0);driveTruck.g.rotation.set(0.02,-0.12,0.06);driveTruck.lights[0].intensity=2.2;driveTruck.lights[1].intensity=0;
+  slide.forEach(sl=>{sl.m.visible=true;sl.landed=true;sl.m.position.set(sl.tx,sl.ty,sl.tz);});
+  ex.root.visible=true;ex.root.position.set(exStop.x,-1.35,exStop.z);ex.root.rotation.set(0,-0.04,0);ex.claw=1;animEX('crushed',1,0,1,true);setEyes(0);
+}
+function zoneResolve(p){
+  const push=(cx,cz,r)=>{const dx=p.x-cx,dz=p.z-cz,d=Math.hypot(dx,dz);if(d<r&&d>1e-4){p.x=cx+dx/d*r;p.z=cz+dz/d*r;}};
+  if(G.zone==='outside'){
+    p.x=clamp(p.x,CAVE_X-6,CAVE_X+4.6);p.z=clamp(p.z,crashPoint.z-26,exStop.z+6);
+    const tx=crashPoint.x-0.6,tz=crashPoint.z+2.0;[-3.4,-1.8,0,1.8].forEach(o=>push(tx+Math.sin(0.12)*o,tz+o,1.6));
+    push(exStop.x,exStop.z,2.9);push(crashPoint.x+1,crashPoint.z-1,2.5);
+  } else if(G.zone==='realm'){
+    const dx=p.x-REALM.x,dz=p.z-REALM.z,d=Math.hypot(dx,dz);if(d>40){p.x=REALM.x+dx/d*40;p.z=REALM.z+dz/d*40;}
+    push(ml.x,ml.z,1.6);
+  } else resolve(p,0.35);
+}
+function startPortal(){
+  resetCommon();G.checkpoint='portal';G.phase='portal';G.zone='outside';G.pt=0;G.t=0;portal.open=false;portal.scale=0;
+  setupOutside();document.body.classList.remove('nohud');setCine(false);$('eyeState').hidden=true;ui.items.hidden=true;ui.driveHud.hidden=true;canvas.style.filter='';
+  if(!invCount('torch'))invAdd('torch');renderHotbar();
+  // you climb out of the cab facing the rubble; the portal opens behind you
+  PL.x=crashPoint.x-2.4;PL.z=crashPoint.z+1.4;yaw=Math.PI;pitch=-0.05;
+  portal.g.position.set(crashPoint.x-2.6,1.75,crashPoint.z-8);portal.g.rotation.set(0,0,0);portal.g.visible=false;
+  objective('You made it out. Catch your breath.');setTimeout(()=>say('EX-15 is under all that rock. It is finally over.',3.5),1300);
+  fadeTo(0,1500);tryLock();
+}
+function updatePortal(dt){
+  G.t+=dt;G.pt+=dt;updatePlayer(dt);const t=G.pt;
+  if(t>5&&!portal.open){portal.open=true;portal.g.visible=true;tone({freq:60,to:240,dur:2.5,vol:0.4,type:'sawtooth'});noise({dur:2.5,vol:0.35,freq:300,to:2400,type:'bandpass',q:1});G.shake=0.4;
+    const l=roomLights[2];l.color.setHex(0x3dff7a);l.distance=26;l.decay=1.2;
+    say('Something just opened <em>behind you</em>. A low hum. Green light on the rocks.',4.5);objective('Turn around. Walk into the portal.');}
+  if(portal.open){portal.scale=damp(portal.scale,1,1.6,dt);const sc=Math.max(0.01,portal.scale);portal.g.scale.set(sc,sc,sc);
+    portal.d1.rotation.z+=dt*1.6;portal.d2.rotation.z-=dt*2.3;const l=roomLights[2];l.position.set(portal.g.position.x,1.8,portal.g.position.z+0.6);l.intensity=2.2*sc+Math.sin(G.t*9)*0.3;
+    G.humT=(G.humT||0)-dt;if(G.humT<=0){G.humT=2.2;tone({freq:55,dur:2.4,vol:0.12*sc,attack:0.3});tone({freq:110.5,dur:2.4,vol:0.05*sc,attack:0.3});}
+    if(Math.random()<dt*20)emit(V3(portal.g.position.x+rand(-1.4,1.4),rand(0.5,3),portal.g.position.z+rand(-0.2,0.4)),{n:1,color:0x5dff8f,speed:0.8,size:0.12,life:1,spark:true,grow:0});
+    const d=Math.hypot(PL.x-portal.g.position.x,PL.z-portal.g.position.z);
+    if(d<3.5){ui.prompt.innerHTML='Walk into the portal';ui.prompt.hidden=false;}
+    if(portal.scale>0.8&&d<1.15)enterRealm();}
+}
+function enterRealm(){
+  G.phase='realm';G.zone='realm';ui.flash.style.background='#5dff8f';flashV=1;ui.prompt.hidden=true;
+  noise({dur:1.4,vol:0.5,freq:4000,to:200,type:'bandpass',q:0.8});tone({freq:880,to:110,dur:1.4,vol:0.2,type:'sine'});
+  portal.g.visible=false;driveTruck.g.visible=false;roomLights.forEach(l=>l.intensity=0);
+  scene.background=new THREE.Color(0x020c06);scene.fog=new THREE.FogExp2(0x03140a,0.028);moon.intensity=0;hemi.intensity=0.3;hemi.color.setHex(0x3dff7a);
+  PL.x=REALM.x;PL.z=REALM.z+17;yaw=0;pitch=0.02;
+  ml.x=REALM.x;ml.z=REALM.z-4;ml.g.position.set(ml.x,0,ml.z);ml.g.rotation.y=0;ml.g.visible=true;
+  G.realm={started:false,lines:0,used:[],talkT:0,talkMax:6,blinkCd:0,ending:false};
+  objective('Follow the light.');setTimeout(()=>say('Where... is this?',2.5),900);
+}
+function updateRealm(dt){
+  G.t+=dt;updatePlayer(dt);const R=G.realm;
+  ml.g.position.set(ml.x,0.6+Math.sin(G.t*1.3)*0.25,ml.z);ml.body.rotation.y=Math.sin(G.t*0.5)*0.15;ml.head.rotation.z=Math.sin(G.t*0.9)*0.08;
+  ml.g.rotation.y=Math.atan2(-(PL.x-ml.x),-(PL.z-ml.z));
+  ml.glows[0].material.opacity=0.55+0.25*Math.sin(G.t*3);ml.light.intensity=2.2+0.5*Math.sin(G.t*4);
+  realm.userData.shards.forEach(m=>{m.rotation.y+=m.userData.s*dt;m.position.y+=Math.sin(G.t+m.id)*dt*0.15;});
+  realm.userData.motes.position.y=(G.t*0.4)%2;
+  const d=Math.hypot(PL.x-ml.x,PL.z-ml.z);
+  if(!R.started&&d<15){R.started=true;mlNextLine();objective('Listen to Misleading Light. Press E to make it talk.');}
+  if(R.started&&!R.ending){R.talkT-=dt;if(R.talkT<=0&&d<22)mlNextLine();}
+  // it never lets you get too close: it blinks away somewhere else
+  R.blinkCd-=dt;if(d<3.3&&R.blinkCd<=0){R.blinkCd=2.5;for(let k=0;k<3;k++)emit(V3(ml.x,1.5+k,ml.z),{n:6,color:0x5dff8f,speed:3,size:0.3,life:0.8,spark:true,grow:0});
+    const a=Math.atan2(ml.z-PL.z,ml.x-PL.x)+rand(-1.2,1.2);ml.x=clamp(PL.x+Math.cos(a)*rand(9,13),REALM.x-30,REALM.x+30);ml.z=clamp(PL.z+Math.sin(a)*rand(9,13),REALM.z-30,REALM.z+30);
+    tone({freq:1600,to:400,dur:0.4,vol:0.12,type:'square'});if(Math.random()<0.5&&!R.ending)say('<span class="ml">Misleading Light</span>Not so close.',2);}
+  ui.prompt.hidden=true;
+  ui.vig.style.opacity=0;
 }
 
 // ---------- start / menu wiring
@@ -1157,12 +1321,14 @@ function frame(now){
     case 'drive':updateDrive(dt);break;
     case 'cutscene':updateCutscene(dt);break;
     case 'dead':updateDeath(dt);break;
+    case 'portal':updatePortal(dt);break;
+    case 'realm':updateRealm(dt);break;
     case 'end':break;
   }
   renderer.render(scene,camera);
 }
 document.body.classList.add('nohud');menuScene();fadeTo(0,1200);requestAnimationFrame(frame);
-window.__ex15={INV,invAdd,canSeePlayer,G,begin,startDrive,startCutscene,PL,EXS,items,ex,camera,path:()=>path,setYaw:v=>{yaw=v;}};
+window.__ex15={ml,portal,startPortal,INV,invAdd,canSeePlayer,G,begin,startDrive,startCutscene,PL,EXS,items,ex,camera,path:()=>path,setYaw:v=>{yaw=v;}};
 })();
 </script>
 </body>
