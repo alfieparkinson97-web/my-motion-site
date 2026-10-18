@@ -20,6 +20,7 @@ html,body{height:100%;margin:0;background:var(--void);color:var(--ink);overflow:
 .layer{position:fixed;inset:0;pointer-events:none}
 #fade{background:#000;opacity:1;transition:opacity .8s ease}
 #flash{background:#fff;opacity:0}
+#stat{opacity:0;mix-blend-mode:screen;background-size:128px 128px}
 #vig{background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(160,0,0,.85) 100%);opacity:0}
 .bar{position:fixed;left:0;right:0;height:0;background:#000;transition:height .7s ease;pointer-events:none}
 #lbTop{top:0}#lbBot{bottom:0}
@@ -78,6 +79,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
 <canvas id="c" tabindex="0"></canvas>
 <div class="layer" id="vig"></div>
+<div class="layer" id="stat"></div>
 <div id="hud">
   <div class="panel" id="obj"><div class="tag" id="objTag">Objective</div><div id="objText"></div></div>
   <div class="panel" id="items" hidden><div class="tag">Truck parts</div><ul id="itemList"></ul></div>
@@ -125,7 +127,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
   <div class="card">
     <div class="stripe"></div>
     <h2>EX-15 got you</h2>
-    <p id="deathTip">Sprint in short bursts. EX-15 is slower than you, but it never stops.</p>
+    <p id="deathTip">EX-15 is only slower than you while you sprint. When it lunges, break line of sight.</p>
     <div class="row"><button id="btnRetry">Retry from checkpoint</button><button class="ghost" id="btnMenu1">Main menu</button></div>
   </div>
 </div>
@@ -355,54 +357,81 @@ const truckCenter={x:31,z:7};
 // ---------- EX-15
 function buildEX15(){
   const root=new THREE.Group();
-  const rust=L({map:rustTex}),haz=L({map:hazTex}),dark=L({color:0x2a1410});
+  const P=o=>new THREE.MeshPhongMaterial(Object.assign({shininess:38,specular:0x5a3020},o));
+  const rust=P({map:rustTex}),haz=P({map:hazTex,shininess:20}),dark=P({color:0x1c0e0b,shininess:70,specular:0x7a4a3a}),steel=P({color:0x8a8580,shininess:90,specular:0xaaaaaa});
   const eyeMat=new THREE.MeshBasicMaterial({color:0xff2a18});
+  const seg=(len,r1,r2,mat,parent,y0=0,x=0,z=0)=>{const g=new THREE.CylinderGeometry(r1,r2,len,12);g.translate(0,-len/2,0);const m=new THREE.Mesh(g,mat);m.position.set(x,y0,z);parent.add(m);return m;};
+  const ball=(r,mat,parent,x=0,y=0,z=0,sx=1,sy=1,sz=1)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(r,18,12),mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);parent.add(m);return m;};
+  const cone=(r,h,mat,parent,x,y,z,rx=0,rz=0)=>{const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,8),mat);m.position.set(x,y,z);m.rotation.set(rx,0,rz);parent.add(m);return m;};
+  // pelvis
   const hips=new THREE.Group();hips.position.y=1.7;root.add(hips);
-  box(0.52,0.22,0.3,rust,0,0,0,hips);
+  ball(0.2,rust,hips,0,0,0,1.35,0.7,0.9);
+  const belt=new THREE.Mesh(new THREE.CylinderGeometry(0.27,0.25,0.09,18),haz);belt.scale.z=0.72;belt.position.y=0.06;hips.add(belt);
+  // torso: exposed spine, ribcage, armoured chest
   const torso=new THREE.Group();torso.position.y=0.1;hips.add(torso);
-  box(0.26,0.5,0.2,dark,0,0.28,0,torso);
-  box(0.44,0.12,0.26,rust,0,0.18,0,torso);box(0.4,0.1,0.24,rust,0,0.36,0,torso);
-  box(0.8,0.56,0.44,rust,0,0.8,0,torso);
-  box(0.86,0.13,0.48,haz,0,1.03,0,torso);
-  box(0.22,0.11,0.04,eyeMat,0.04,0.86,-0.235,torso);
-  box(0.25,0.17,0.04,eyeMat,0,0.47,-0.13,torso);
-  box(0.6,0.3,0.12,dark,0,0.75,0.25,torso);
+  seg(0.62,0.045,0.055,dark,torso,0.66,0,0.05);
+  for(let i=0;i<5;i++)ball(0.055,steel,torso,0,0.1+i*0.11,0.06,1.2,0.6,1);
+  for(let i=0;i<4;i++){const g=new THREE.TorusGeometry(0.19-i*0.012,0.022,6,18,Math.PI*1.35);g.rotateZ(-Math.PI*1.175);g.rotateX(Math.PI/2);const m=new THREE.Mesh(g,rust);m.position.set(0,0.24+i*0.1,0.03);m.scale.set(1.15,1,0.85);torso.add(m);}
+  ball(0.3,rust,torso,0,0.84,0,1.45,0.95,0.85);
+  ball(0.2,haz,torso,0,0.88,-0.17,1.35,0.85,0.35);
+  const collar=new THREE.Mesh(new THREE.TorusGeometry(0.3,0.05,8,22),haz);collar.rotation.x=Math.PI/2;collar.scale.set(1.25,0.85,1);collar.position.y=1.06;torso.add(collar);
+  ball(0.055,eyeMat,torso,0.07,0.93,-0.25,1.9,1,0.5);
+  ball(0.075,eyeMat,torso,0,0.46,-0.02,1.6,1.1,1.0);
+  const coreGlow=glowSprite(0xff3018,0.7,torso,0,0.46,-0.12);
+  for(let i=0;i<6;i++)cone(0.045,0.32-i*0.02,dark,torso,0,0.42+i*0.13,0.2,1.0,0);
+  // neck + head with a hinged jaw
   const neck=new THREE.Group();neck.position.y=1.1;torso.add(neck);
-  box(0.12,0.22,0.12,dark,0,0.08,0,neck);
+  seg(0.26,0.045,0.06,dark,neck,0.24);
+  [-0.06,0.06].forEach(x=>{const c=seg(0.3,0.012,0.012,dark,neck,0.24,x,0.03);c.rotation.z=x*1.5;});
   const head=new THREE.Group();head.position.y=0.18;neck.add(head);
-  box(0.36,0.4,0.38,rust,0,0.18,0,head);
-  box(0.4,0.15,0.08,dark,0,0.22,-0.19,head);
-  box(0.3,0.1,0.3,rust,0,-0.03,-0.04,head);
-  box(0.06,0.14,0.2,haz,0.2,0.2,0,head);box(0.06,0.14,0.2,haz,-0.2,0.2,0,head);
-  const eyes=[-0.09,0.09].map(x=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.065,10,8),eyeMat);e.position.set(x,0.22,-0.235);head.add(e);return e;});
-  const eyeGlow=[-0.09,0.09].map(x=>glowSprite(0xff3018,0.75,head,x,0.22,-0.27));
-  const eyeLight=new THREE.PointLight(0xff2a18,0,9,1.8);eyeLight.position.set(0,0.2,-0.6);head.add(eyeLight);
+  ball(0.2,rust,head,0,0.22,0.03,0.92,1.1,1.08);
+  ball(0.17,dark,head,0,0.25,-0.12,1.25,0.42,0.62);
+  ball(0.07,haz,head,0.17,0.18,-0.03,0.5,1.25,1.3);ball(0.07,haz,head,-0.17,0.18,-0.03,0.5,1.25,1.3);
+  cone(0.03,0.2,dark,head,0.1,0.42,0.08,0.6,-0.4);cone(0.03,0.2,dark,head,-0.1,0.42,0.08,0.6,0.4);
+  const eyes=[-0.085,0.085].map(x=>ball(0.055,eyeMat,head,x,0.245,-0.215));
+  const eyeGlow=[-0.085,0.085].map(x=>glowSprite(0xff3018,0.95,head,x,0.245,-0.26));
+  ball(0.08,eyeMat,head,0,0.1,-0.1,1.3,0.6,1);// throat glow, seen when the jaw opens
+  for(let i=0;i<5;i++)cone(0.016,0.07,steel,head,-0.08+i*0.04,0.1,-0.19,Math.PI,0);
+  const jaw=new THREE.Group();jaw.position.set(0,0.11,0.02);head.add(jaw);
+  ball(0.14,rust,jaw,0,-0.04,-0.09,1.0,0.45,1.05);
+  for(let i=0;i<6;i++)cone(0.016,0.08,steel,jaw,-0.09+i*0.036,0.0,-0.2+Math.abs(i-2.5)*0.012);
+  const eyeLight=new THREE.PointLight(0xff2a18,0,12,1.6);eyeLight.position.set(0,0.2,-0.6);head.add(eyeLight);
+  // legs with talon feet
   function leg(side){const hip=new THREE.Group();hip.position.set(0.17*side,-0.08,0);hips.add(hip);
-    box(0.2,0.8,0.22,haz,0,-0.4,0,hip);const knee=new THREE.Group();knee.position.y=-0.8;hip.add(knee);
-    box(0.24,0.2,0.27,rust,0,0,-0.02,knee);box(0.16,0.76,0.18,rust,0,-0.4,0,knee);box(0.2,0.1,0.4,dark,0,-0.78,-0.08,knee);return {hip,knee};}
+    ball(0.095,dark,hip);seg(0.8,0.11,0.072,haz,hip);
+    const knee=new THREE.Group();knee.position.y=-0.8;hip.add(knee);
+    ball(0.1,rust,knee,0,0,-0.02);cone(0.04,0.18,dark,knee,0,0.02,-0.1,-1.4,0);
+    seg(0.74,0.075,0.05,rust,knee,-0.02);seg(0.6,0.014,0.014,steel,knee,-0.05,0,0.07);
+    ball(0.06,dark,knee,0,-0.76,0);
+    [-0.07,0,0.07].forEach(x=>cone(0.035,0.32,dark,knee,x,-0.8,-0.15,-Math.PI/2,0));
+    cone(0.03,0.16,dark,knee,0,-0.8,0.09,Math.PI/2,0);
+    return {hip,knee};}
   function arm(side){const sh=new THREE.Group();sh.position.set(0.5*side,0.94,0);torso.add(sh);
-    box(0.32,0.26,0.38,rust,0,0.04,0,sh);box(0.14,0.84,0.14,dark,0,-0.42,0,sh);
-    const el=new THREE.Group();el.position.y=-0.84;sh.add(el);box(0.18,0.18,0.18,rust,0,0,0,el);box(0.17,0.88,0.17,haz,0,-0.45,0,el);
-    const hand=new THREE.Group();hand.position.y=-0.92;el.add(hand);return {sh,el,hand};}
+    ball(0.17,rust,sh,0,0.03,0,1.1,0.85,1.2);cone(0.05,0.26,haz,sh,0.06*side,0.2,0,0,-0.5*side);
+    seg(0.84,0.07,0.058,dark,sh);seg(0.7,0.016,0.016,steel,sh,-0.06,0.07*side,0.03);
+    const el=new THREE.Group();el.position.y=-0.84;sh.add(el);ball(0.085,rust,el);
+    seg(0.9,0.098,0.068,haz,el);
+    const hand=new THREE.Group();hand.position.y=-0.92;el.add(hand);ball(0.07,dark,hand);return {sh,el,hand};}
   const legL=leg(-1),legR=leg(1),armL=arm(-1),armR=arm(1);
-  // claw (right hand)
-  box(0.22,0.14,0.22,rust,0,-0.04,0,armR.hand);
+  // claw (right hand): long curved talons
+  ball(0.11,rust,armR.hand,0,-0.06,0,1,0.7,1);
   const fingers=[];
-  [[-0.07,-0.08,1],[0.07,-0.08,1],[0,0.09,-1]].forEach(([x,z,dir])=>{
+  [[-0.08,-0.06,1],[0,-0.09,1],[0.08,-0.06,1],[0,0.09,-1]].forEach(([x,z,dir])=>{
     const f=new THREE.Group();f.position.set(x,-0.1,z);armR.hand.add(f);
-    box(0.055,0.34,0.06,dark,0,-0.17,0,f);
-    const j=new THREE.Group();j.position.y=-0.34;f.add(j);box(0.05,0.3,0.05,rust,0,-0.15,0,j);
-    const tip=new THREE.Mesh(new THREE.ConeGeometry(0.035,0.22,5),rust);tip.rotation.x=Math.PI;tip.position.y=-0.4;j.add(tip);
-    j.rotation.x=0.7*dir;fingers.push({f,j,dir});
+    seg(0.36,0.036,0.03,dark,f);ball(0.034,rust,f,0,-0.36,0);
+    const j=new THREE.Group();j.position.y=-0.36;f.add(j);seg(0.32,0.03,0.02,rust,j);
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.28,8),steel);tip.rotation.x=Math.PI;tip.position.y=-0.45;j.add(tip);
+    fingers.push({f,j,dir});
   });
   // spiked wheel (left hand)
   const weapon=new THREE.Group();weapon.position.set(0,-0.25,-0.05);armL.hand.add(weapon);
   const disk=new THREE.Mesh(new THREE.CylinderGeometry(0.44,0.44,0.15,8),rust);disk.rotation.z=Math.PI/2;weapon.add(disk);
-  const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.2,8),dark);hub.rotation.z=Math.PI/2;weapon.add(hub);
-  box(0.21,0.05,0.12,eyeMat,0,0,0,weapon);
-  for(let i=0;i<4;i++){const s=new THREE.Group();s.rotation.x=i*Math.PI/2+0.4;weapon.add(s);box(0.08,0.62,0.1,haz,0,0.6,0,s);const hook=box(0.07,0.28,0.08,haz,0,0.86,0.1,s);hook.rotation.x=0.9;}
-  root.traverse(o=>{if(o.isMesh)o.frustumCulled=true;});
-  return {root,hips,torso,neck,head,legL,legR,armL,armR,fingers,weapon,eyeMat,eyeGlow,eyeLight,eyes,phase:0,pose:{},claw:0,lastStep:0};
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.2,16),dark);hub.rotation.z=Math.PI/2;weapon.add(hub);
+  ball(0.08,eyeMat,weapon,0,0,0,1.6,1,1);
+  for(let i=0;i<4;i++){const s=new THREE.Group();s.rotation.x=i*Math.PI/2+0.4;weapon.add(s);
+    const sp=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.05,0.62,8),haz);sp.position.y=0.62;s.add(sp);
+    cone(0.04,0.3,steel,s,0,0.98,0.08,0.9,0);}
+  return {root,hips,torso,neck,head,jaw,legL,legR,armL,armR,fingers,weapon,eyeMat,eyeGlow,eyeLight,eyes,coreGlow,phase:0,pose:{},claw:0,lastStep:0,jawOpen:0,jawBoost:0,tw:1,twHold:0,twY:0,twZ:0};
 }
 const ex=buildEX15();scene.add(ex.root);
 
@@ -432,10 +461,14 @@ function animEX(mode,dt,t,rate=1,snap=false){
   ex.armL.sh.rotation.set(p.laX,0,p.laZ);ex.armL.el.rotation.x=p.laEl;ex.armR.sh.rotation.set(p.raX,0,p.raZ);ex.armR.el.rotation.x=p.raEl;
   ex.weapon.rotation.x+=dt*(mode==='run'||mode==='walk'||mode==='attack'?6:0.5);
   setClaw(ex.claw);
+  const jawT=Math.max(ex.jawBoost,{run:0.3+0.25*Math.abs(Math.sin(t*11)),walk:0.12,stand:0.06+0.05*Math.max(0,Math.sin(t*1.3)),attack:0.55,roar:1,lunge:1,stunned:0.4}[mode]||0);
+  ex.jawOpen+=(jawT-ex.jawOpen)*(1-Math.exp(-14*dt));ex.jaw.rotation.x=-ex.jawOpen*0.75;
+  if(mode!=='dormant'&&mode!=='crushed'){ex.tw-=dt;if(ex.tw<=0){ex.tw=rand(0.35,1.8);if(Math.random()<0.65){ex.twY=rand(-0.7,0.7);ex.twZ=rand(-0.55,0.55);ex.twHold=rand(0.08,0.3);}}
+    if(ex.twHold>0){ex.twHold-=dt;ex.head.rotation.y+=ex.twY;ex.head.rotation.z+=ex.twZ;}}
   if(mode==='walk'||mode==='run'){const step=Math.floor(ex.phase/Math.PI);if(step!==ex.lastStep){ex.lastStep=step;onExStep();}}
 }
 function setClaw(k){ex.fingers.forEach(({f,j,dir})=>{f.rotation.x=lerp(0.55,-0.25,k)*dir;j.rotation.x=lerp(0.55,1.25,k)*dir;});}
-function setEyes(level){const c=new THREE.Color(0xff2a18).multiplyScalar(Math.max(0.08,level));ex.eyeMat.color.copy(c);ex.eyeGlow.forEach(s=>s.material.opacity=level);ex.eyeLight.intensity=level*1.6;}
+function setEyes(level){const c=new THREE.Color(0xff2a18).multiplyScalar(Math.max(0.08,level));ex.eyeMat.color.copy(c);ex.eyeGlow.forEach(s=>s.material.opacity=level);ex.eyeLight.intensity=level*2.4;ex.coreGlow.material.opacity=level*0.8;}
 
 // ---------- particles (dust / sparks)
 const parts=[];
@@ -532,7 +565,7 @@ const AU={ctx:null};
 function audioInit(){
   if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return;}
   try{const ctx=new (window.AudioContext||window.webkitAudioContext)();AU.ctx=ctx;AU.master=ctx.createGain();AU.master.gain.value=0.85;AU.master.connect(ctx.destination);
-    const b=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;startDrone();}catch(e){AU.ctx=null;}
+    const b=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;startDrone();startGrowl();}catch(e){AU.ctx=null;}
 }
 function env(g,t,attack,peak,dur){g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(0.0002,peak),t+attack);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);}
 function noise({dur=0.3,vol=0.4,freq=800,type='lowpass',q=1,attack=0.005,delay=0,to=null}={}){if(!AU.ctx)return;const c=AU.ctx,t=c.currentTime+delay;const s=c.createBufferSource();s.buffer=AU.noise;s.loop=true;const f=c.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(freq,t);if(to)f.frequency.exponentialRampToValueAtTime(to,t+dur);f.Q.value=q;const g=c.createGain();env(g,t,attack,vol,dur);s.connect(f);f.connect(g);g.connect(AU.master);s.start(t,Math.random());s.stop(t+dur+0.05);}
@@ -552,9 +585,15 @@ const SFX={
   rumble:(d=4)=>{noise({dur:d,vol:0.7,freq:140,attack:1.2});tone({freq:38,dur:d,vol:0.4,attack:1});},
   rock:(v=1)=>{noise({dur:0.35,vol:0.6*v,freq:500,to:120});tone({freq:80,to:40,dur:0.3,vol:0.4*v});},
   powerDown:()=>{tone({freq:420,to:40,dur:2.6,vol:0.12,type:'sawtooth'});tone({freq:210,to:25,dur:2.6,vol:0.1});},
+  sting:()=>{tone({freq:1800,to:1200,dur:0.6,vol:0.12,type:'sawtooth'});tone({freq:1907,to:1150,dur:0.6,vol:0.1,type:'square'});tone({freq:45,dur:0.8,vol:0.6});noise({dur:0.5,vol:0.35,freq:3000,type:'bandpass',q:1});},
+  screechShort:()=>{tone({freq:1100,to:500,dur:0.55,vol:0.22,type:'sawtooth'});tone({freq:1650,to:700,dur:0.55,vol:0.15,type:'square'});noise({dur:0.5,vol:0.3,freq:2600,type:'bandpass',q:1});},
   scrape:()=>noise({dur:0.4,vol:0.35,freq:1400,type:'bandpass',q:1.5}),
 };
 const loops={};
+function growlSet(v){const g=loops.growl;if(!g||!AU.ctx)return;g.gain.setTargetAtTime(v,AU.ctx.currentTime,0.12);}
+function startGrowl(){const c=AU.ctx;const g=c.createGain();g.gain.value=0;g.connect(AU.master);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=520;f.Q.value=4;f.connect(g);
+  const o=c.createOscillator();o.type='sawtooth';o.frequency.value=58;const o2=c.createOscillator();o2.type='square';o2.frequency.value=87;const l=c.createOscillator();l.frequency.value=6.5;const lg=c.createGain();lg.gain.value=14;l.connect(lg);lg.connect(o.frequency);lg.connect(o2.frequency);o.connect(f);o2.connect(f);
+  const n=c.createBufferSource();n.buffer=AU.noise;n.loop=true;const nf=c.createBiquadFilter();nf.type='bandpass';nf.frequency.value=1400;nf.Q.value=2;const ng=c.createGain();ng.gain.value=0.25;n.connect(nf);nf.connect(ng);ng.connect(g);o.start();o2.start();l.start();n.start();loops.growl=g;}
 function startDrone(){const c=AU.ctx;const g=c.createGain();g.gain.value=0.05;g.connect(AU.master);[47,50.5,94].forEach(f=>{const o=c.createOscillator();o.frequency.value=f;o.connect(g);o.start();});loops.drone=g;}
 function alarmOn(on){if(!AU.ctx)return;const c=AU.ctx;if(on&&!loops.alarm){const o=c.createOscillator();o.type='sawtooth';o.frequency.value=620;const l=c.createOscillator();l.frequency.value=0.9;const lg=c.createGain();lg.gain.value=230;l.connect(lg);lg.connect(o.frequency);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=1600;const g=c.createGain();g.gain.value=0;g.gain.setTargetAtTime(0.045,c.currentTime,0.2);o.connect(f);f.connect(g);g.connect(AU.master);o.start();l.start();loops.alarm={o,l,g};}
   if(!on&&loops.alarm){const a=loops.alarm;a.g.gain.setTargetAtTime(0,c.currentTime,0.3);setTimeout(()=>{try{a.o.stop();a.l.stop();}catch(e){}},1500);loops.alarm=null;}}
@@ -564,7 +603,8 @@ function engineOn(on){if(!AU.ctx)return;const c=AU.ctx;if(on&&!loops.engine){con
 function engineSet(speed,wind){const e=loops.engine;if(!e||!AU.ctx)return;const t=AU.ctx.currentTime;e.o.frequency.setTargetAtTime(38+speed*1.6,t,0.1);e.o2.frequency.setTargetAtTime(76+speed*3.2,t,0.1);e.wg.gain.setTargetAtTime(wind,t,0.15);}
 
 // ---------- UI helpers
-const ui={obj:$('objText'),sub:$('sub'),notice:$('notice'),prompt:$('prompt'),progress:$('progress'),stam:$('stam'),axe:$('axeState'),items:$('items'),itemList:$('itemList'),fade:$('fade'),flash:$('flash'),vig:$('vig'),driveHud:$('driveHud'),gap:$('gapBar'),look:$('lookHint')};
+const ui={obj:$('objText'),sub:$('sub'),notice:$('notice'),prompt:$('prompt'),progress:$('progress'),stam:$('stam'),axe:$('axeState'),items:$('items'),itemList:$('itemList'),fade:$('fade'),flash:$('flash'),vig:$('vig'),driveHud:$('driveHud'),gap:$('gapBar'),look:$('lookHint'),stat:$('stat')};
+{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');const im=g.createImageData(128,128);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;im.data[i]=v;im.data[i+1]=v*0.55;im.data[i+2]=v*0.5;im.data[i+3]=255;}g.putImageData(im,0,0);ui.stat.style.backgroundImage=`url(${c.toDataURL()})`;}
 let subTimer=0,noticeTimer=0;
 function say(html,dur=3.5){ui.sub.innerHTML=html;ui.sub.classList.add('on');subTimer=dur;}
 function notice(text,dur=2){ui.notice.textContent=text;ui.notice.classList.add('on');noticeTimer=dur;}
@@ -624,7 +664,7 @@ function resetCommon(){
   flash.visible=true;flash.intensity=1.5;ex.root.visible=true;ex.root.position.y=0;ex.claw=0;ex.root.rotation.set(0,0,0);
   slide.forEach(s=>{s.m.visible=false;s.landed=false;});engineOn(false);
   items.forEach(it=>{it.taken=false;it.mesh.visible=true;it.glow.visible=true;});
-  PL.vx=PL.vz=0;PL.stamina=100;PL.exhausted=false;
+  PL.vx=PL.vz=0;PL.stamina=100;PL.exhausted=false;G.burstT=0;G.burstCd=2;G.unseenT=0;ex.jawBoost=0;growlSet(0);ui.stat.style.opacity=0;
 }
 function setLights(mode){
   roomLights.forEach((l,i)=>{l.distance=22;l.decay=1.6;if(mode==='normal'){l.color.setHex(0xffe2b8);l.intensity=i<3?1.1:0.7;}else{l.color.setHex(0xff2a14);l.intensity=1.0;}});
@@ -647,7 +687,7 @@ function startCheckpoint(cp){
     G.hasAxe=true;vm.visible=true;items.find(i=>i.type==='axe').taken=true;const ai=items.find(i=>i.type==='axe');ai.mesh.visible=false;ai.glow.visible=false;
     pod.clamps.forEach(c=>c.position.x=c.userData.home-0.9);setLights('red');alarmOn(true);
     placeEX(31,37.5,Math.PI,'stand');EXS.y=0;setEyes(1);EXS.active=true;
-    PL.x=41;PL.z=25;yaw=0.3;pitch=0;G.phase='factory';G.grace=2.5;G.exSpeed=3.9;
+    PL.x=41;PL.z=25;yaw=0.3;pitch=0;G.phase='factory';G.grace=2.5;G.exSpeed=4.8;
     ui.items.hidden=false;refreshItems();objective('Find 3 gears, a fuel canister and scrap metal, then fix the truck.');say('EX-15 is through the shutter. <em>Keep moving.</em>',3);
   } else if(cp==='drive'){startDrive();}
   fadeTo(0,900);
@@ -661,7 +701,7 @@ function interact(){
   if(it){if(it.type!=='axe'&&G.phase!=='factory'&&G.phase!=='locked'){return;}
     it.taken=true;it.mesh.visible=false;it.glow.visible=false;SFX.pickup();
     if(it.type==='axe'){G.hasAxe=true;vm.visible=true;onAxe();}
-    else{refreshItems();G.exSpeed+=0.18;const left=items.filter(i=>i.type!=='axe'&&!i.taken).length;say(left?`Got the ${it.label.toLowerCase()}. ${left} part${left>1?'s':''} left.`:'That\'s everything. <em>Get to the truck!</em>',2.5);if(!left)objective('Get to the truck by the vehicle exit and hold E to repair it.');}
+    else{refreshItems();G.exSpeed+=0.2;const left=items.filter(i=>i.type!=='axe'&&!i.taken).length;say(left?`Got the ${it.label.toLowerCase()}. ${left} part${left>1?'s':''} left.`:'That\'s everything. <em>Get to the truck!</em>',2.5);if(!left)objective('Get to the truck by the vehicle exit and hold E to repair it.');}
   }
 }
 function refreshItems(){const n=t=>items.filter(i=>i.type===t&&i.taken).length;const rows=[['Gears',n('gear'),3],['Fuel canister',n('fuel'),1],['Scrap metal',n('scrap'),1]];
@@ -671,7 +711,7 @@ function onAxe(){
   // grabbing the axe is the checkpoint: the shutter starts to give
   G.checkpoint='factory';objective('Something is forcing the shutter. Get ready.');say('A fire axe. Left click to swing. A good hit stuns EX-15 for a few seconds.',4);
   setTimeout(()=>{if(G.phase!=='locked')return;notice('Shutter breached',1.6);SFX.bang();G.shake=0.6;shutter.target=1;
-    setTimeout(()=>{if(G.phase!=='locked')return;shutter.solid=false;G.phase='factory';G.exSpeed=3.9;G.grace=0.6;ui.items.hidden=false;refreshItems();
+    setTimeout(()=>{if(G.phase!=='locked')return;shutter.solid=false;G.phase='factory';G.exSpeed=4.8;G.grace=0.6;ui.items.hidden=false;refreshItems();
       objective('Find 3 gears, a fuel canister and scrap metal, then fix the truck.');},1400);},3000);
 }
 
@@ -681,8 +721,8 @@ function updatePlayer(dt){
   const s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
   const len=Math.hypot(f,s);
   const sprint=(keys.ShiftLeft||keys.ShiftRight)&&f>0&&!PL.exhausted&&PL.stamina>0;
-  const spd=sprint?7.2:4.2;
-  if(sprint&&len>0){PL.stamina-=19*dt;if(PL.stamina<=0){PL.stamina=0;PL.exhausted=true;}}else{PL.stamina=Math.min(100,PL.stamina+13*dt);if(PL.exhausted&&PL.stamina>35)PL.exhausted=false;}
+  const spd=sprint?7.7:4.3;
+  if(sprint&&len>0){PL.stamina-=16*dt;if(PL.stamina<=0){PL.stamina=0;PL.exhausted=true;}}else{PL.stamina=Math.min(100,PL.stamina+13*dt);if(PL.exhausted&&PL.stamina>35)PL.exhausted=false;}
   const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
   let tvx=0,tvz=0;if(len>0){tvx=(fx*f+rx*s)/len*spd;tvz=(fz*f+rz*s)/len*spd;}
   PL.vx=damp(PL.vx,tvx,12,dt);PL.vz=damp(PL.vz,tvz,12,dt);
@@ -730,15 +770,30 @@ function updateEX(dt){
     const dx=tx-EXS.x,dz=tz-EXS.z,d=Math.hypot(dx,dz);
     const blocked=G.phase==='locked'&&EXS.z<34.5;
     if(blocked){EXS.mode='attack';faceTowards(31,20,dt,6);G.bangT=(G.bangT||0)-dt;if(G.bangT<=0){G.bangT=0.62;SFX.bang();shutter.mesh.position.z=31+0.08;G.shake=Math.max(G.shake,0.25*clamp(1-dPl/25,0,1)+0.08);emit(V3(31+rand(-2,2),rand(1,4),31.3),{n:3,color:0x777068,speed:1,size:0.6,life:1});}}
-    else if(d>0.05){const sp=G.exSpeed;EXS.x+=dx/d*sp*dt;EXS.z+=dz/d*sp*dt;resolve(EXS,0.45);EXS.mode=sp>4.6?'run':'walk';faceTowards(EXS.x+dx,EXS.z+dz,dt,8);}
+    else if(d>0.05){
+      const see=los(EXS.x,EXS.z,PL.x,PL.z);
+      if(see&&G.unseenT>3&&dPl<22){SFX.sting();G.shake=Math.max(G.shake,0.3);}
+      G.unseenT=see?0:(G.unseenT||0)+dt;
+      G.burstCd=(G.burstCd||0)-dt;
+      if(see&&dPl<10&&dPl>2.2&&G.burstCd<=0&&G.phase!=='toDrive'){G.burstT=1.15;G.burstCd=rand(4.5,7.5);SFX.screechShort();G.shake=Math.max(G.shake,0.35);}
+      if(G.burstT>0)G.burstT-=dt;
+      const sp=G.burstT>0?7.5:G.exSpeed;ex.jawBoost=G.burstT>0?1:0;
+      EXS.x+=dx/d*sp*dt;EXS.z+=dz/d*sp*dt;resolve(EXS,0.45);EXS.mode=sp>4.6?'run':'walk';faceTowards(EXS.x+dx,EXS.z+dz,dt,G.burstT>0?14:8);}
     if(dPl<1.3&&!blocked&&G.phase!=='toDrive')return die();
   }
   shutter.mesh.position.z=damp(shutter.mesh.position.z,31,10,dt);
   ex.root.position.set(EXS.x,EXS.y,EXS.z);ex.root.rotation.y=EXS.yaw;
-  animEX(EXS.mode,dt,G.t,EXS.mode==='run'?9:EXS.mode==='walk'?6.5:1);
+  animEX(EXS.mode,dt,G.t,EXS.mode==='run'?(G.burstT>0?14:10.5):EXS.mode==='walk'?7:1);
   // dread feedback
   const danger=clamp(1-dPl/13,0,1);ui.vig.style.opacity=(danger*0.85).toFixed(3);
   G.heartT-=dt;if(danger>0.05&&G.heartT<=0){G.heartT=lerp(1.1,0.42,danger);SFX.heart(0.4+danger*0.6);}
+  dread(clamp(1-dPl/16,0,1));
+}
+// static, growl and flickering lights that rise as EX-15 gets close
+function dread(v){
+  growlSet(Math.pow(v,1.4)*0.16);
+  ui.stat.style.opacity=(v*v*0.22).toFixed(3);ui.stat.style.backgroundPosition=`${(Math.random()*128)|0}px ${(Math.random()*128)|0}px`;
+  if(onFoot())roomLights.forEach(l=>{const d=Math.hypot(l.position.x-EXS.x,l.position.z-EXS.z);if(d<11&&Math.random()<0.35)l.intensity*=Math.random()*0.3;});
 }
 function faceTowards(x,z,dt,k){const target=Math.atan2(-(x-EXS.x),-(z-EXS.z));EXS.yaw+=angDiff(EXS.yaw,target)*(1-Math.exp(-k*dt));}
 function onExStep(){
@@ -748,7 +803,7 @@ function onExStep(){
 
 // ---------- death
 function die(){
-  if(G.phase==='dead')return;G.prevPhase=G.phase;G.phase='dead';G.deathT=0;SFX.screech();alarmOn(false);engineOn(false);
+  if(G.phase==='dead')return;growlSet(0);ui.stat.style.opacity=0.35;ex.jawBoost=1;G.prevPhase=G.phase;G.phase='dead';G.deathT=0;SFX.screech();alarmOn(false);engineOn(false);
   if(document.exitPointerLock)document.exitPointerLock();ui.prompt.hidden=true;ui.progress.hidden=true;ui.look.hidden=true;ui.sub.classList.remove('on');setCine(false);document.body.classList.add('nohud');
 }
 function updateDeath(dt){
@@ -763,8 +818,8 @@ function updateDeath(dt){
   } else {const D=G.drive;const bx=D.x+Math.sin(D.h)*(4.2-smooth(k/0.5)*1.4),bz=D.z+Math.cos(D.h)*(4.2-smooth(k/0.5)*1.4);ex.root.position.set(bx,0,bz);ex.root.rotation.y=D.h;
     camera.position.set(D.x+rand(-1,1)*0.05,2.3,D.z);camera.lookAt(bx,2.2,bz);camera.rotation.z+=rand(-0.05,0.05);animEX('lunge',dt,G.t);setEyes(1);}
   ui.flash.style.background='#a00';ui.flash.style.opacity=k<0.8?(0.15+Math.random()*0.35).toFixed(2):0;
-  if(k>1.0&&$('death').hidden){fadeTo(0.85,200);$('death').hidden=false;ui.flash.style.opacity=0;
-    const tips={lab:'Sprint in short bursts. EX-15 is slower than you, but it never stops.',factory:'Swing the axe when EX-15 is close to stun it, then run for the next part.',drive:'Scraping the cave walls slows the truck down. Steer early and keep to the middle.'};
+  if(k>1.0&&$('death').hidden){ui.stat.style.opacity=0;fadeTo(0.85,200);$('death').hidden=false;ui.flash.style.opacity=0;
+    const tips={lab:'EX-15 is only slower than you while you sprint. When it lunges, break line of sight.',factory:'Swing the axe when EX-15 is close to stun it, then run for the next part. It lunges when it can see you.',drive:'Scraping the cave walls slows the truck down. Steer early and keep to the middle.'};
     $('deathTip').textContent=tips[G.checkpoint]||tips.lab;}
 }
 
@@ -786,7 +841,7 @@ function updateActivating(dt){
     const k=smooth((a-2.6)/0.7);EXS.x=lerp(markers.X[0],markers.X[0]+1.6,k);EXS.y=lerp(0.3,0,k);mode='walk';}
   if(a>1.6)faceTowards(PL.x,PL.z,dt,3);
   ex.root.position.set(EXS.x,EXS.y,EXS.z);ex.root.rotation.y=EXS.yaw;animEX(mode,dt,G.t,mode==='walk'?5:1);
-  if(a>3.3){G.phase='chase';EXS.active=true;EXS.y=0;G.exSpeed=4.5;G.grace=0;}
+  if(a>3.3){G.phase='chase';EXS.active=true;EXS.y=0;G.exSpeed=5.4;G.grace=0;}
   roomLights.forEach(l=>l.intensity=0.6+0.6*Math.max(0,Math.sin(G.t*6)));
 }
 function updateChase(dt){
@@ -841,12 +896,12 @@ function updateDrive(dt){
   const tg=driveTruck.g;tg.position.set(D.x,Math.sin(G.t*20)*0.02,D.z);tg.rotation.set(0,D.h,-D.steer*0.04);driveTruck.wheels.forEach(w=>w.rotation.x-=D.speed*dt/0.46);
   // EX-15 chases along the path
   const truckDist=D.i*segLen;let gap=truckDist-D.exDist;
-  const exSpeed=gap>55?27:gap>20?21:19.5;D.exDist+=exSpeed*dt;gap=truckDist-D.exDist;
+  const exSpeed=gap>50?29:gap>20?22.5:21;D.exDist+=exSpeed*dt;gap=truckDist-D.exDist;
   const ei=clamp(Math.round(D.exDist/segLen),0,PATHN-1);const ep=path[ei],et=tang[ei];
   EXS.x=ep.x+rightV[ei].x*Math.sin(G.t*0.7)*1.5;EXS.z=ep.z+rightV[ei].z*Math.sin(G.t*0.7)*1.5;EXS.yaw=Math.atan2(-et.x,-et.z);
   ex.root.position.set(EXS.x,0,EXS.z);ex.root.rotation.y=EXS.yaw;animEX('run',dt,G.t,13);
   ui.gap.style.width=clamp(100-gap/70*100,4,100)+'%';
-  ui.vig.style.opacity=clamp(1-gap/22,0,0.85).toFixed(3);
+  ui.vig.style.opacity=clamp(1-gap/22,0,0.85).toFixed(3);growlSet(clamp(1-gap/30,0,1)*0.14);ex.jawBoost=gap<15?1:0;
   if(gap<4.5){EXS.x=D.x;return die();}
   // cave lamps leapfrog ahead of the truck
   const slot=Math.floor(D.i/110);roomLights.slice(0,3).forEach((l,j)=>{let s=slot+((j-slot)%3+3)%3;if(s<=slot)s+=3;const k=Math.min(PATHN-1,s*110);l.position.set(path[k].x,5.5,path[k].z);});
@@ -862,7 +917,7 @@ function updateDrive(dt){
 }
 
 // ---------- ending cutscene
-function startCutscene(){
+function startCutscene(){growlSet(0);vm.visible=false;
   G.phase='cutscene';G.cut={t:0,crashed:false,flags:{}};setCine(true);ui.driveHud.hidden=true;ui.vig.style.opacity=0;
   scene.background=new THREE.Color(0x0b1224);scene.fog=new THREE.Fog(0x0b1224,30,260);moon.intensity=0.65;hemi.intensity=0.3;hemi.color.setHex(0x6d80b0);
   roomLights.forEach(l=>l.intensity=0);
@@ -956,9 +1011,9 @@ function frame(now){
     case 'menu':{G.t+=dt;const [px,pz]=markers.X;const a=G.t*0.12;camera.position.set(px+4.5+Math.sin(a)*0.8,1.5,pz+3.2+Math.cos(a)*0.5);camera.lookAt(px,2.1,pz);animEX('dormant',dt,G.t);setEyes(0.35+0.25*Math.sin(G.t*2));roomLights.forEach((l,i)=>l.intensity=i<2?0.5+0.4*Math.max(0,Math.sin(G.t*3)):0.4);break;}
     case 'lab':updateLab(dt);break;
     case 'activating':updateActivating(dt);break;
-    case 'chase':updateChase(dt);break;
+    case 'chase':updateChase(dt);if(G.phase==='chase')dread(clamp(1-Math.hypot(PL.x-EXS.x,PL.z-EXS.z)/16,0,1));break;
     case 'locked':updateLocked(dt);break;
-    case 'factory':updateFactory(dt);break;
+    case 'factory':updateFactory(dt);if(G.phase==='factory')dread(clamp(1-Math.hypot(PL.x-EXS.x,PL.z-EXS.z)/16,0,1));break;
     case 'toDrive':G.t+=dt;updatePlayer(dt);updateEX(dt);break;
     case 'drive':updateDrive(dt);break;
     case 'cutscene':updateCutscene(dt);break;
